@@ -55,11 +55,13 @@ public class AuthController {
     // Endpoint connexion
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest request) {
+        System.out.println("Tentative login: " + request.getEmail());
         try {
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getMotDePasse())
             );
         } catch (Exception ex) {
+            ex.printStackTrace(); // Ajoute ceci pour voir l’erreur exacte
             return ResponseEntity.status(401).body("Email ou mot de passe invalide");
         }
 
