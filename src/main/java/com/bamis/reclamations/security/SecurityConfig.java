@@ -27,11 +27,12 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated()
-                
+                .requestMatchers("/api/auth/**").permitAll() // Auth libre
+                .requestMatchers("/api/admin/**").hasRole("ADMIN") // réservé ADMIN
+                .requestMatchers("/api/user/**").hasAnyRole("ADMIN", "UTILISATEUR") // accessible aux 2
+                .anyRequest().authenticated() // Tout le reste : utilisateur connecté
             )
-            .userDetailsService(utilisateurService) // Remplace DaoAuthenticationProvider
+            .userDetailsService(utilisateurService)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

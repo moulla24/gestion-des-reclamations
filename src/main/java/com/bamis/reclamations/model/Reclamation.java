@@ -8,7 +8,7 @@ import java.util.List;
 public class Reclamation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     private String titre;
@@ -22,7 +22,7 @@ public class Reclamation {
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
 
-    private Integer priorite;
+    private Priorite  priorite;
 
     // Créateur de la réclamation
     @ManyToOne
@@ -93,11 +93,11 @@ public class Reclamation {
         this.dateModification = dateModification;
     }
 
-    public Integer getPriorite() {
+    public Priorite  getPriorite() {
         return priorite;
     }
 
-    public void setPriorite(Integer priorite) {
+    public void setPriorite(Priorite  priorite) {
         this.priorite = priorite;
     }
 

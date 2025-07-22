@@ -8,6 +8,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "type_utilisateur")
 @Entity
@@ -19,22 +22,23 @@ public class Utilisateur implements UserDetails {
 
     private String nom;
     private String prenom;
-    
+
     @Column(unique = true, nullable = false)
-    private String email; // correspondra à username dans UserDetails
-    
+    private String email;
+
     private String motDePasse;
     private String telephone;
 
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    private Boolean actif;
+    private Boolean actif = true;
 
     @OneToMany(mappedBy = "utilisateur")
+    @JsonIgnore
     private List<Reclamation> reclamationsCreees;
 
-    // --- Constructeurs
+    // --- Constructeurs ---
 
     public Utilisateur() {}
 
@@ -48,50 +52,94 @@ public class Utilisateur implements UserDetails {
         this.actif = actif;
     }
 
-    // --- Getters / Setters
+    // --- Getters et Setters ---
 
-    public void setId(Long id) { this.id = id; }
-    public Long getId() { return id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getPrenom() { return prenom; }
-    public void setPrenom(String prenom) { this.prenom = prenom; }
+    public String getNom() {
+        return nom;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
 
-    public String getMotDePasse() { return motDePasse; }
-    public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
+    public String getPrenom() {
+        return prenom;
+    }
 
-    public String getTelephone() { return telephone; }
-    public void setTelephone(String telephone) { this.telephone = telephone; }
+    public void setPrenom(String prenom) {
+        this.prenom = prenom;
+    }
 
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public String getEmail() {
+        return email;
+    }
 
-    public Boolean getActif() { return actif; }
-    public void setActif(Boolean actif) { this.actif = actif; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public List<Reclamation> getReclamationsCreees() { return reclamationsCreees; }
-    public void setReclamationsCreees(List<Reclamation> reclamationsCreees) { this.reclamationsCreees = reclamationsCreees; }
+    public String getMotDePasse() {
+        return motDePasse;
+    }
 
-    // --- Méthodes métiers
+    public void setMotDePasse(String motDePasse) {
+        this.motDePasse = motDePasse;
+    }
 
-    public void changerMotDePasse(String nouveauMdp) {
-        this.motDePasse = nouveauMdp;
+    public String getTelephone() {
+        return telephone;
+    }
+
+    public void setTelephone(String telephone) {
+        this.telephone = telephone;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public Boolean getActif() {
+        return actif;
+    }
+
+    public void setActif(Boolean actif) {
+        this.actif = actif;
+    }
+
+    public List<Reclamation> getReclamationsCreees() {
+        return reclamationsCreees;
+    }
+
+    public void setReclamationsCreees(List<Reclamation> reclamationsCreees) {
+        this.reclamationsCreees = reclamationsCreees;
+    }
+
+    // --- Méthodes métiers ---
+
+    public void changerMotDePasse(String nouveauMotDePasse) {
+        this.motDePasse = nouveauMotDePasse;
     }
 
     public boolean estAdministrateur() {
         return this.role == Role.ADMIN;
     }
 
-    // --- Implémentation UserDetails ---
+    // --- Implémentation de UserDetails ---
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // On crée une autorité ROLE_XXX à partir de l'enum Role
         return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
@@ -107,21 +155,21 @@ public class Utilisateur implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;  // Pour l’instant, on considère que le compte n’expire jamais
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;  // On considère que le compte n’est jamais bloqué
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;  // On considère que les identifiants ne expirent pas
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return Boolean.TRUE.equals(this.actif);  // On utilise le champ actif pour savoir si le compte est activé
+        return Boolean.TRUE.equals(this.actif);
     }
 }

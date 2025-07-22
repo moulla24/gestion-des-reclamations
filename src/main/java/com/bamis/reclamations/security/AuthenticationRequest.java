@@ -3,7 +3,7 @@ package com.bamis.reclamations.security;
 public class AuthenticationRequest {
     private String email;
     private String motDePasse;
-
+     
     public AuthenticationRequest() {}
 
     public AuthenticationRequest(String email, String motDePasse) {

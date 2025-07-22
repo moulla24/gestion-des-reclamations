@@ -2,11 +2,13 @@ package com.bamis.reclamations.service;
 
 import com.bamis.reclamations.model.Utilisateur;
 import com.bamis.reclamations.repository.UtilisateurRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -39,6 +41,7 @@ public class UtilisateurService implements UserDetailsService {
         return utilisateurRepository.findAll();
     }
 
+    
     public Optional<Utilisateur> findById(Long id) {
         return utilisateurRepository.findById(id);
     }
@@ -49,9 +52,19 @@ public class UtilisateurService implements UserDetailsService {
 
     public void deleteById(Long id) {
         utilisateurRepository.deleteById(id);
+
     }
 
     public Optional<Utilisateur> findByEmail(String email) {
         return utilisateurRepository.findByEmail(email);
     }
+
+    public Utilisateur getCurrentAuthenticatedUser() {
+    org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String email = authentication.getName();
+    return utilisateurRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
+    }
 }
+    
+
