@@ -10,4 +10,5 @@ public interface ReclamationRepository extends JpaRepository<Reclamation, Long> 
     List<Reclamation> findByUtilisateurId(Long utilisateurId);
     List<Reclamation> findByDestinataireId(Long destinataireId);
     List<Reclamation> findByUtilisateur(Utilisateur utilisateur);
+    List<Reclamation> findByUtilisateurEmail(String email);
 }

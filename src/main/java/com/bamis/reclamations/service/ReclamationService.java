@@ -1,6 +1,7 @@
 package com.bamis.reclamations.service;
 
 import com.bamis.reclamations.model.Reclamation;
+import com.bamis.reclamations.model.StatutReclamation;
 import com.bamis.reclamations.model.Utilisateur;
 import com.bamis.reclamations.repository.ReclamationRepository;
 import com.bamis.reclamations.repository.UtilisateurRepository;
@@ -53,4 +54,16 @@ public class ReclamationService {
             .orElseThrow(() -> new UsernameNotFoundException("Utilisateur introuvable avec email : " + email));
         return reclamationRepository.findByUtilisateur(utilisateur);
     }
+    public Optional<Reclamation> getById(Long id) {
+        return reclamationRepository.findById(id);
+    }
+
+    public Reclamation mettreAJourStatut(Long id, StatutReclamation nouveauStatut) {
+        Reclamation reclamation = reclamationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Réclamation non trouvée"));
+        reclamation.setStatut(nouveauStatut);
+        return reclamationRepository.save(reclamation);
+    }
+
+
 }

@@ -52,4 +52,7 @@ private List<Destinataire> destinataires = new ArrayList<>();
 
     public List<Destinataire> getDestinataires() { return destinataires; }
     public void setDestinataires(List<Destinataire> destinataires) { this.destinataires = destinataires; }
+
+
+
 }

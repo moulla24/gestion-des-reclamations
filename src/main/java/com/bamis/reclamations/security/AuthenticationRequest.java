@@ -1,5 +1,10 @@
 package com.bamis.reclamations.security;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class AuthenticationRequest {
     private String email;
     private String motDePasse;
@@ -11,19 +16,4 @@ public class AuthenticationRequest {
         this.motDePasse = motDePasse;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getMotDePasse() {
-        return motDePasse;
-    }
-
-    public void setMotDePasse(String motDePasse) {
-        this.motDePasse = motDePasse;
-    }
 }
