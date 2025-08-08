@@ -1,0 +1,282 @@
+<div class="boite-reception-container">
+  <div class="header-section">
+    <div class="header-content">
+      <h1>📥 Boîte de Réception</h1>
+      <p>Gérez vos messages et notifications</p>
+    </div>
+    
+    <!-- Statistiques -->
+    @if (statistiques) {
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📧</div>
+          <div class="stat-content">
+            <div class="stat-number">{{ statistiques.totalMessages }}</div>
+            <div class="stat-label">Total messages</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📬</div>
+          <div class="stat-content">
+            <div class="stat-number">{{ statistiques.messagesNonLus }}</div>
+            <div class="stat-label">Non lus</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🚨</div>
+          <div class="stat-content">
+            <div class="stat-number">{{ statistiques.messagesUrgents }}</div>
+            <div class="stat-label">Urgents</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-content">
+            <div class="stat-number">{{ statistiques.messagesAujourdhui }}</div>
+            <div class="stat-label">Aujourd'hui</div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Filtres et actions -->
+  <div class="filters-section">
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        placeholder="🔍 Rechercher dans les messages..."
+        class="search-input"
+        (keyup.enter)="rechercherMessages()"
+      />
+      <button class="search-btn" (click)="rechercherMessages()">🔍</button>
+    </div>
+    
+    <div class="filter-controls">
+      <select [(ngModel)]="typeFilter" class="filter-select">
+        <option value="">Tous les types</option>
+        <option value="REPONSE">Réponses</option>
+        <option value="NOTIFICATION">Notifications</option>
+        <option value="SYSTEME">Système</option>
+      </select>
+      
+      <select [(ngModel)]="prioriteFilter" class="filter-select">
+        <option value="">Toutes priorités</option>
+        <option value="URGENTE">Urgente</option>
+        <option value="HAUTE">Haute</option>
+        <option value="NORMALE">Normale</option>
+        <option value="BASSE">Basse</option>
+      </select>
+      
+      <select [(ngModel)]="luFilter" class="filter-select">
+        <option value="">Tous</option>
+        <option value="non-lu">Non lus</option>
+        <option value="lu">Lus</option>
+      </select>
+      
+      <button (click)="clearFilters()" class="clear-btn">
+        🗑️ Effacer
+      </button>
+    </div>
+
+    @if (selectedMessages.length > 0) {
+      <div class="bulk-actions">
+        <span class="selected-count">{{ selectedMessages.length }} message(s) sélectionné(s)</span>
+        <button class="action-btn" (click)="marquerPlusieursCommeLus()">
+          ✅ Marquer comme lus
+        </button>
+        <button class="action-btn danger" (click)="supprimerPlusieursMessages()">
+          🗑️ Supprimer
+        </button>
+      </div>
+    }
+
+    <div class="global-actions">
+      <button class="action-btn" (click)="marquerTousCommeLus()">
+        ✅ Tout marquer comme lu
+      </button>
+      <button class="action-btn danger" (click)="viderBoiteReception()">
+        🗑️ Vider la boîte
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages d'état -->
+  @if (loading) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Chargement en cours...</p>
+    </div>
+  }
+  
+  @if (error) {
+    <div class="error-alert">
+      <div class="error-icon">⚠️</div>
+      <p>{{ error }}</p>
+    </div>
+  }
+
+  <!-- Contenu principal -->
+  @if (!loading) {
+    <div class="main-content">
+      <div class="messages-grid">
+        <!-- Liste des messages -->
+        <div class="messages-list">
+          <div class="list-header">
+            <div class="select-all">
+              <input 
+                type="checkbox" 
+                [checked]="selectAll" 
+                (change)="toggleSelectAll()"
+              />
+              <span>Messages ({{ filteredMessages.length }})</span>
+            </div>
+          </div>
+          
+          <div class="messages-items">
+            @for (message of filteredMessages; track message.id) {
+              <div class="message-item" 
+                   [class.selected]="selectedMessage?.id === message.id"
+                   [class.unread]="!message.lu"
+                   (click)="selectMessage(message)">
+                
+                <div class="message-checkbox">
+                  <input 
+                    type="checkbox" 
+                    [checked]="selectedMessages.includes(message.id)"
+                    (click)="$event.stopPropagation()"
+                    (change)="toggleSelectMessage(message.id)"
+                  />
+                </div>
+                
+                <div class="message-icon">
+                  {{ getTypeIcon(message.type) }}
+                </div>
+                
+                <div class="message-content">
+                  <div class="message-header">
+                    <span class="message-sender">{{ message.expediteur }}</span>
+                    <span class="message-date">{{ message.dateEnvoi | date:'short' }}</span>
+                  </div>
+                  <div class="message-title">{{ message.titre }}</div>
+                  <div class="message-preview">{{ message.contenu | slice:0:100 }}{{ message.contenu.length > 100 ? '...' : '' }}</div>
+                </div>
+                
+                <div class="message-meta">
+                  <span class="priorite-badge" [ngClass]="getPrioriteClass(message.priorite)">
+                    {{ getPrioriteIcon(message.priorite) }}
+                  </span>
+                  @if (message.pieceJointe) {
+                    <span class="attachment-icon">📎</span>
+                  }
+                </div>
+              </div>
+            }
+            
+            @if (filteredMessages.length === 0) {
+              <div class="empty-messages">
+                <div class="empty-icon">📭</div>
+                <p>Aucun message trouvé.</p>
+                @if (searchTerm || typeFilter || prioriteFilter || luFilter) {
+                  <small>Essayez de modifier vos filtres de recherche.</small>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Détails du message -->
+        @if (selectedMessage) {
+          <div class="message-details">
+            <div class="detail-header">
+              <h3>{{ selectedMessage.titre }}</h3>
+              <div class="detail-actions">
+                @if (!selectedMessage.lu) {
+                  <button 
+                    class="action-btn small" 
+                    (click)="marquerCommeLu(selectedMessage.id)"
+                    title="Marquer comme lu"
+                  >
+                    ✅
+                  </button>
+                }
+                @if (selectedMessage.lu) {
+                  <button 
+                    class="action-btn small" 
+                    (click)="marquerCommeNonLu(selectedMessage.id)"
+                    title="Marquer comme non lu"
+                  >
+                    📬
+                  </button>
+                }
+                <button 
+                  class="action-btn small danger" 
+                  (click)="supprimerMessage(selectedMessage.id)"
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+            
+            <div class="detail-meta">
+              <div class="meta-row">
+                <span class="meta-label">De:</span>
+                <span class="meta-value">{{ selectedMessage.expediteur }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">À:</span>
+                <span class="meta-value">{{ selectedMessage.destinataire }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Date:</span>
+                <span class="meta-value">{{ selectedMessage.dateEnvoi | date:'full' }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Type:</span>
+                <span class="meta-value">{{ getTypeIcon(selectedMessage.type) }} {{ selectedMessage.type }}</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Priorité:</span>
+                <span class="meta-value" [ngClass]="getPrioriteClass(selectedMessage.priorite)">
+                  {{ getPrioriteIcon(selectedMessage.priorite) }} {{ selectedMessage.priorite }}
+                </span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Statut:</span>
+                <span class="meta-value" [ngClass]="selectedMessage.lu ? 'status-lu' : 'status-non-lu'">
+                  {{ selectedMessage.lu ? '📭 Lu' : '📬 Non lu' }}
+                </span>
+              </div>
+            </div>
+            
+            <div class="detail-content">
+              <h4>Contenu du message</h4>
+              <div class="message-body">
+                {{ selectedMessage.contenu }}
+              </div>
+            </div>
+            
+            @if (selectedMessage.reclamationId) {
+              <div class="detail-reclamation">
+                <h4>Réclamation associée</h4>
+                <p>Ce message est lié à la réclamation #{{ selectedMessage.reclamationId }}</p>
+                <button class="view-reclamation-btn">👁️ Voir la réclamation</button>
+              </div>
+            }
+          </div>
+        }
+        
+        <!-- État vide pour les détails -->
+        @if (!selectedMessage) {
+          <div class="empty-details">
+            <div class="empty-icon">👆</div>
+            <h3>Sélectionnez un message</h3>
+            <p>Cliquez sur un message dans la liste pour voir son contenu détaillé.</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

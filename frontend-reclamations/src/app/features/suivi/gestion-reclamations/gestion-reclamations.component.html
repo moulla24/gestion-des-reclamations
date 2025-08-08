@@ -1,0 +1,323 @@
+<div class="gestion-reclamations-container">
+  <!-- Header avec statistiques -->
+  <div class="header-section">
+    <div class="header-content">
+      <h1>Gestion des Réclamations Assignées</h1>
+      <p>Gérez les réclamations qui vous ont été assignées</p>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ statistiques.total }}</div>
+          <div class="stat-label">Total</div>
+        </div>
+      </div>
+      
+      <div class="stat-card stat-attente">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ statistiques.enAttente }}</div>
+          <div class="stat-label">En Attente</div>
+        </div>
+      </div>
+      
+      <div class="stat-card stat-encours">
+        <div class="stat-icon">🔄</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ statistiques.enCours }}</div>
+          <div class="stat-label">En Cours</div>
+        </div>
+      </div>
+      
+      <div class="stat-card stat-resolu">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ statistiques.resolues }}</div>
+          <div class="stat-label">Résolues</div>
+        </div>
+      </div>
+      
+      <div class="stat-card stat-rejete">
+        <div class="stat-icon">❌</div>
+        <div class="stat-content">
+          <div class="stat-number">{{ statistiques.rejetees }}</div>
+          <div class="stat-label">Rejetées</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres et recherche -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="Rechercher par titre, description ou utilisateur..."
+          [(ngModel)]="searchTerm"
+          (input)="searchTerm = $any($event.target).value"
+        >
+        <span class="search-icon">🔍</span>
+      </div>
+      
+      <div class="filters-group">
+        <select [(ngModel)]="statutFilter" class="filter-select">
+          <option value="">Tous les statuts</option>
+          <option value="EN_ATTENTE">En Attente</option>
+          <option value="EN_COURS">En Cours</option>
+          <option value="RESOLU">Résolu</option>
+          <option value="REJETE">Rejeté</option>
+          <option value="FERME">Fermé</option>
+        </select>
+        
+        <select [(ngModel)]="dateFilter" class="filter-select">
+          <option value="">Toutes les dates</option>
+          <option value="aujourdhui">Aujourd'hui</option>
+          <option value="semaine">Cette semaine</option>
+          <option value="mois">Ce mois</option>
+        </select>
+        
+        <button class="clear-filters-btn" (click)="clearFilters()">
+          🗑️ Effacer les filtres
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="main-content">
+    <!-- Liste des réclamations -->
+    <div class="reclamations-list">
+      <div class="list-header">
+        <h2>Réclamations Assignées ({{ filteredReclamations.length }})</h2>
+        @if (loading) {
+          <div class="loading-spinner">Chargement...</div>
+        }
+      </div>
+      
+      @if (error) {
+        <div class="error-message">
+          {{ error }}
+        </div>
+      }
+      
+      @if (!loading && filteredReclamations.length > 0) {
+        <div class="reclamations-grid">
+          @for (reclamation of filteredReclamations; track reclamation.id) {
+            <div 
+              class="reclamation-card"
+              [class.selected]="selectedReclamation?.id === reclamation.id"
+              (click)="selectReclamation(reclamation)"
+            >
+              <div class="card-header">
+                <div class="reclamation-title">{{ reclamation.titre }}</div>
+                <div class="reclamation-status">
+                  <span class="status-badge" [class]="getStatutClass(reclamation.statut)">
+                    {{ getStatutIcon(reclamation.statut) }} {{ reclamation.statut }}
+                  </span>
+                </div>
+              </div>
+              
+              <div class="card-content">
+                <div class="reclamation-info">
+                  <div class="info-row">
+                    <span class="info-label">Utilisateur:</span>
+                    <span class="info-value">{{ reclamation.emailUtilisateur }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Catégorie:</span>
+                    <span class="info-value">{{ reclamation.nomCategorie }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">Date:</span>
+                    <span class="info-value">{{ reclamation.dateCreation | date:'short' }}</span>
+                  </div>
+                </div>
+                
+                <div class="reclamation-description">
+                  {{ reclamation.description | slice:0:100 }}{{ reclamation.description.length > 100 ? '...' : '' }}
+                </div>
+                
+                @if (reclamation.fichiersJoints && reclamation.fichiersJoints.length > 0) {
+                  <div class="fichiers-joints">
+                    <div class="fichiers-title">📎 Fichiers joints:</div>
+                    <div class="fichiers-list">
+                      @for (fichier of reclamation.fichiersJoints; track fichier.id) {
+                        <div 
+                          class="fichier-item"
+                          (click)="telechargerFichier(fichier); $event.stopPropagation()"
+                        >
+                          <span class="fichier-icon">📄</span>
+                          <span class="fichier-name">{{ fichier.nomFichier }}</span>
+                          <span class="fichier-size">({{ formatFileSize(fichier.tailleFichier) }})</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+              
+              <div class="card-actions">
+                <button 
+                  class="action-btn update-btn"
+                  (click)="ouvrirFormulaireMiseAJour(); $event.stopPropagation()"
+                  title="Mettre à jour le statut"
+                >
+                  ✏️ Mettre à jour
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+      
+      @if (!loading && filteredReclamations.length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>Aucune réclamation trouvée</h3>
+          <p>Aucune réclamation ne correspond à vos critères de recherche.</p>
+        </div>
+      }
+    </div>
+
+    <!-- Détails de la réclamation sélectionnée -->
+    @if (selectedReclamation) {
+      <div class="reclamation-details">
+        <div class="details-header">
+          <h3>Détails de la Réclamation</h3>
+          <button class="close-btn" (click)="selectedReclamation = null">✕</button>
+        </div>
+        
+        <div class="details-content">
+          <div class="detail-section">
+            <h4>Informations Générales</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Titre:</span>
+                <span class="detail-value">{{ selectedReclamation.titre }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Statut:</span>
+                <span class="detail-value">
+                  <span class="status-badge" [class]="getStatutClass(selectedReclamation.statut)">
+                    {{ getStatutIcon(selectedReclamation.statut) }} {{ selectedReclamation.statut }}
+                  </span>
+                </span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Utilisateur:</span>
+                <span class="detail-value">{{ selectedReclamation.emailUtilisateur }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Catégorie:</span>
+                <span class="detail-value">{{ selectedReclamation.nomCategorie }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Date de création:</span>
+                <span class="detail-value">{{ selectedReclamation.dateCreation | date:'medium' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section">
+            <h4>Description</h4>
+            <div class="description-content">
+              {{ selectedReclamation.description }}
+            </div>
+          </div>
+          
+          @if (selectedReclamation.fichiersJoints && selectedReclamation.fichiersJoints.length > 0) {
+            <div class="detail-section">
+              <h4>Fichiers Joints</h4>
+              <div class="fichiers-details">
+                @for (fichier of selectedReclamation.fichiersJoints; track fichier.id) {
+                  <div class="fichier-detail-item">
+                    <div class="fichier-info">
+                      <span class="fichier-icon">📄</span>
+                      <span class="fichier-name">{{ fichier.nomFichier }}</span>
+                      <span class="fichier-size">({{ formatFileSize(fichier.tailleFichier) }})</span>
+                    </div>
+                    <button 
+                      class="download-btn"
+                      (click)="telechargerFichier(fichier)"
+                      title="Télécharger le fichier"
+                    >
+                      📥 Télécharger
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Formulaire de mise à jour -->
+  @if (showUpdateForm) {
+    <div class="update-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Mettre à jour la réclamation</h3>
+          <button class="close-btn" (click)="annulerMiseAJour()">✕</button>
+        </div>
+        
+        <form [formGroup]="updateForm" (ngSubmit)="soumettreMiseAJour()" class="update-form">
+          <div class="form-group">
+            <label for="nouveauStatut">Nouveau statut *</label>
+            <select id="nouveauStatut" formControlName="nouveauStatut" class="form-control">
+              <option value="EN_ATTENTE">En Attente</option>
+              <option value="EN_COURS">En Cours</option>
+              <option value="RESOLU">Résolu</option>
+              <option value="REJETE">Rejeté</option>
+              <option value="FERME">Fermé</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="commentaire">Commentaire *</label>
+            <textarea 
+              id="commentaire" 
+              formControlName="commentaire" 
+              class="form-control"
+              rows="4"
+              placeholder="Ajoutez un commentaire sur cette mise à jour..."
+            ></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="priorite">Priorité</label>
+            <select id="priorite" formControlName="priorite" class="form-control">
+              <option value="URGENTE">Urgente</option>
+              <option value="HAUTE">Haute</option>
+              <option value="NORMALE">Normale</option>
+              <option value="BASSE">Basse</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="dateResolution">Date de résolution</label>
+            <input 
+              type="datetime-local" 
+              id="dateResolution" 
+              formControlName="dateResolution" 
+              class="form-control"
+            >
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="annulerMiseAJour()">
+              Annuler
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="updateForm.invalid">
+              Mettre à jour
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

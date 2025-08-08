@@ -1,0 +1,96 @@
+<div class="container">
+  <h2>Nouvelle Réclamation</h2>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="success" class="success-message">
+    {{ success }}
+  </div>
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <form (ngSubmit)="soumettre()" #reclamationForm="ngForm">
+
+    <label for="titre">Titre</label>
+    <input
+      type="text"
+      id="titre"
+      [(ngModel)]="titre"
+      name="titre"
+      placeholder="Sujet de la réclamation"
+      required
+      #titreInput="ngModel"
+    />
+    <div *ngIf="titreInput.invalid && titreInput.touched" class="error">Le titre est requis.</div>
+
+    <label for="description">Description</label>
+    <textarea
+      id="description"
+      [(ngModel)]="description"
+      name="description"
+      rows="5"
+      placeholder="Décrivez votre problème"
+      required
+      #descInput="ngModel"
+    ></textarea>
+    <div *ngIf="descInput.invalid && descInput.touched" class="error">La description est requise.</div>
+
+    <label for="categorieSelect">Choisir une catégorie</label>
+    <select
+      id="categorieSelect"
+      [(ngModel)]="selectedCategorieId"
+      name="categorieSelect"
+      (change)="onCategorieChange()"
+      required
+      #categorieSelectInput="ngModel"
+    >
+      <option [ngValue]="null" disabled>-- Sélectionner --</option>
+      <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.libelle }}</option>
+    </select>
+    <div *ngIf="categorieSelectInput.invalid && categorieSelectInput.touched" class="error">
+      Veuillez sélectionner une catégorie ou en créer une.
+    </div>
+
+    <label for="destinataireSelect">Choisir un destinataire</label>
+    <select
+      id="destinataireSelect"
+      [(ngModel)]="selectedDestinataireId"
+      name="destinataireSelect"
+      [disabled]="!selectedCategorieId"
+      required
+      #destinataireSelectInput="ngModel"
+    >
+      <option [ngValue]="null" disabled>-- Sélectionner --</option>
+      <option *ngFor="let d of destinataires" [ngValue]="d.id">
+        {{ d.nom || d.prenom || d.email }}
+      </option>
+    </select>
+    <div *ngIf="destinataireSelectInput.invalid && destinataireSelectInput.touched" class="error">
+      Veuillez sélectionner un destinataire ou en créer un.
+    </div>
+
+    <label for="fichierJoint">Ajouter un fichier joint (optionnel)</label>
+    <div class="file-upload-section">
+      <input
+        type="file"
+        id="fichierJoint"
+        (change)="handleFileInput($event)"
+        accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.txt"
+      />
+      <div *ngIf="fileName" class="selected-file">
+        <span class="file-name">📎 {{ fileName }}</span>
+        <button type="button" class="clear-file-btn" (click)="clearFile()" title="Supprimer le fichier">
+          ✕
+        </button>
+      </div>
+      <small class="file-info">
+        Types acceptés : PDF, images, documents Word/Excel, texte. Taille max : 10MB
+      </small>
+    </div>
+
+    <button type="submit" [disabled]="reclamationForm.invalid || loading" class="submit-btn">
+      <span *ngIf="loading" class="loading-spinner">⏳</span>
+      {{ loading ? 'Soumission en cours...' : 'Soumettre' }}
+    </button>
+  </form>
+</div>

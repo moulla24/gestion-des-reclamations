@@ -1,0 +1,31 @@
+TERMINAL VOLTAGES
+~~~~~~~~~~~~~~~~~
+
+AREF              0.00V
+GND               0.00V
+VCC               5.000V
+
+TERMINAL LOGIC STATES
+~~~~~~~~~~~~~~~~~~~~~
+
+$RESET$           FLT
+PB0/ICP1/CLKO     FLT
+PB1/OC1A          FLT
+PB2/$SS$/OC1B     FLT
+PB3/MOSI/OC2A     FLT
+PB4/MISO          FLT
+PB5/SCK           FLT
+PC0/ADC0          FLT
+PC1/ADC1          FLT
+PC2/ADC2          FLT
+PC3/ADC3          FLT
+PC4/ADC4/SDA      FLT
+PC5/ADC5/SCL      FLT
+PD0/RXD           FLT
+PD1/TXD           FLT
+PD2/INT0          WLO
+PD3/INT1          FLT
+PD4/T0/XCK        FLT
+PD5/T1            FLT
+PD6/AIN0          FLT
+PD7/AIN1          FLT

@@ -1,0 +1,25 @@
+.boite-container {
+  padding: 20px;
+  background-color: #f4f7f9;
+  min-height: 100vh;
+}
+
+.reclamations-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 20px;
+}
+
+.reclamation-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-left: 6px solid #3498db;
+}
+
+.reclamation-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}

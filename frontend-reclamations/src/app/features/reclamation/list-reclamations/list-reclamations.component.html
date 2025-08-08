@@ -1,0 +1,87 @@
+<div class="container">
+  <h2>Mes Réclamations</h2>
+
+  <!-- Success/Error Messages -->
+  @if (success) {
+    <div class="success-message">
+      {{ success }}
+    </div>
+  }
+  @if (error) {
+    <div class="error-message">
+      {{ error }}
+    </div>
+  }
+
+  @if (loading) {
+    <p class="loading">Chargement en cours...</p>
+  }
+
+  @if (reclamations.length > 0) {
+    <table class="table-reclamations">
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th>Fichiers joints</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (rec of reclamations; track rec.id) {
+          <tr>
+            <td>{{ rec.titre }}</td>
+            <td [ngClass]="rec.statut.toLowerCase()">{{ rec.statut }}</td>
+            <td>{{ rec.dateCreation | date:'short' }}</td>
+            <td>
+              @if (rec.fichiersJoints && rec.fichiersJoints.length > 0) {
+                <div class="fichiers-joints">
+                  @for (fichier of rec.fichiersJoints; track fichier.id) {
+                    <span class="fichier-badge">
+                      📎 {{ fichier.nomFichier }}
+                    </span>
+                  }
+                </div>
+              } @else {
+                <span class="no-files">
+                  Aucun fichier
+                </span>
+              }
+            </td>
+            <td>
+              <div class="actions-container">
+                <button title="Voir" (click)="voirDetails(rec.id)" class="icon-button">
+                  <!-- Icône œil (voir) -->
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8z"/>
+                    <path d="M8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
+                  </svg>
+                </button>
+
+                <button title="Modifier" (click)="modifier(rec.id)" class="icon-button">
+                  <!-- Icône crayon (modifier) -->
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M12.146.854a.5.5 0 0 1 .708 0l2.292 2.292a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 3L13 4.793 14.793 3 13 1.207 11.207 3zM12 5.207L10.793 4 3 11.793V13h1.207L12 5.207z"/>
+                  </svg>
+                </button>
+
+                <button title="Supprimer" (click)="supprimer(rec.id)" class="icon-button delete">
+                  <!-- Icône poubelle (supprimer) -->
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M5.5 5.5v6h1v-6h-1zm2 0v6h1v-6h-1zm2 0v6h1v-6h-1z"/>
+                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V2a.5.5 0 0 1 .5-.5H6V1a1 1 0 0 1 2 0v.5h3.5a.5.5 0 0 1 .5.5v1zm-11-1v1h11V2h-11z"/>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  @if (reclamations.length === 0 && !loading) {
+    <p>Vous n'avez aucune réclamation.</p>
+  }
+</div>

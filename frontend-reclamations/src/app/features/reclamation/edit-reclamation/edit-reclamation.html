@@ -1,0 +1,29 @@
+<div class="container">
+  <h2>Modifier la Réclamation</h2>
+
+  <form [formGroup]="reclamationForm" (ngSubmit)="onSubmit()">
+
+    <label for="titre">Titre</label>
+    <input id="titre" type="text" formControlName="titre" required />
+
+    <label for="description">Description</label>
+    <textarea id="description" formControlName="description" rows="4" required></textarea>
+
+    <label for="categorie">Catégorie</label>
+    <select id="categorie" formControlName="categorieId" required>
+      <option value="" disabled>-- Sélectionnez une catégorie --</option>
+      <option *ngFor="let c of categories" [value]="c.id">{{ c.libelle }}</option>
+    </select>
+
+    <label for="destinataire">Destinataire</label>
+    <select id="destinataire" formControlName="destinataireId" required>
+      <option value="" disabled>-- Sélectionnez un destinataire --</option>
+      <option *ngFor="let d of destinataires" [value]="d.id">{{ d.nom || d.prenom || d.email }}</option>
+    </select>
+
+    <div class="actions">
+      <button type="submit" [disabled]="reclamationForm.invalid">Mettre à jour</button>
+      <button type="button" (click)="retourListe()">Retour</button>
+    </div>
+  </form>
+</div>

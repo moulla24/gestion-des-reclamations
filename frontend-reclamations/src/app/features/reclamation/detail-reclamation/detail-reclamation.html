@@ -1,0 +1,37 @@
+<div class="card" *ngIf="reclamation">
+  <h2 class="card-title">Détails de la Réclamation</h2>
+  <div class="card-content">
+    <p><strong>Titre :</strong> {{ reclamation.titre }}</p>
+    <p><strong>Description :</strong> {{ reclamation.description }}</p>
+    <p><strong>Catégorie :</strong> {{ reclamation.nomCategorie }}</p>
+    <p><strong>Statut :</strong> <span [ngClass]="reclamation.statut.toLowerCase()">{{ reclamation.statut }}</span></p>
+    <p><strong>Date de création :</strong> {{ reclamation.dateCreation | date:'medium' }}</p>
+    
+    <!-- Fichiers joints -->
+    <div *ngIf="reclamation.fichiersJoints && reclamation.fichiersJoints.length > 0" class="fichiers-section">
+      <h3>Fichiers joints</h3>
+      <div class="fichiers-list">
+        <div *ngFor="let fichier of reclamation.fichiersJoints" class="fichier-item">
+          <span class="fichier-icon">📎</span>
+          <span class="fichier-name">{{ fichier.nomFichier }}</span>
+          <span class="fichier-size">({{ formatFileSize(fichier.tailleFichier) }})</span>
+          <button class="download-btn" (click)="telechargerFichier(fichier)" title="Télécharger">
+            ⬇️
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="!reclamation.fichiersJoints || reclamation.fichiersJoints.length === 0" class="no-files">
+      <p>Aucun fichier joint à cette réclamation.</p>
+    </div>
+  </div>
+  
+  <div class="card-actions">
+    <button (click)="modifierReclamation()" class="edit-btn">Modifier</button>
+    <button (click)="retourListe()" class="back-btn">Retour à la liste</button>
+  </div>
+</div>
+
+<p *ngIf="loading">Chargement...</p>
+<p *ngIf="error" class="error">{{ error }}</p>

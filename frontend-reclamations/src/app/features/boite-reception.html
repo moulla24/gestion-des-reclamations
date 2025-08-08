@@ -1,0 +1,18 @@
+<div class="boite-container">
+  <h2>📥 Boîte de Réception</h2>
+
+  @if (reclamations.length === 0) {
+    <div>Aucune réclamation reçue.</div>
+  }
+
+  <div class="reclamations-list">
+    @for (r of reclamations; track r.id) {
+      <div class="reclamation-card">
+        <h3>{{ r.titre }}</h3>
+        <p><strong>Catégorie:</strong> {{ r.nomCategorie }}</p>
+        <p><strong>Statut:</strong> {{ r.statut }}</p>
+        <p><strong>Message:</strong> {{ r.description }}</p>
+      </div>
+    }
+  </div>
+</div>

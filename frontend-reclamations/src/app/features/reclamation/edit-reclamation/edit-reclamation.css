@@ -1,0 +1,44 @@
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #f9fff9;
+  border: 2px solid #4CAF50;
+  border-radius: 12px;
+}
+
+h2 {
+  text-align: center;
+  color: #4CAF50;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+  color: #333;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  margin-top: 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #9ccc9c;
+  cursor: not-allowed;
+}

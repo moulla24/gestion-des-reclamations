@@ -1,0 +1,175 @@
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px 25px;
+  background-color: #e6f4ea;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 128, 0, 0.15);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1a3d1a;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 700;
+}
+
+.loading {
+  text-align: center;
+  font-style: italic;
+  color: #4caf50;
+}
+
+.error-message {
+  color: #b00020;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-align: center;
+  padding: 10px;
+  background-color: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 4px;
+}
+
+.success-message {
+  color: #2e7d32;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-align: center;
+  padding: 10px;
+  background-color: #e8f5e8;
+  border: 1px solid #c8e6c9;
+  border-radius: 4px;
+}
+
+.table-reclamations {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+
+.table-reclamations thead {
+  background-color: #4caf50;
+  color: white;
+}
+
+.table-reclamations th,
+.table-reclamations td {
+  padding: 12px 15px;
+  border: 1px solid #a5d6a7;
+  text-align: center;
+}
+
+.table-reclamations tbody tr:hover {
+  background-color: #c8e6c9;
+  cursor: pointer;
+}
+
+.table-reclamations button {
+  padding: 6px 12px;
+  border: none;
+  background-color: #388e3c;
+  color: white;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.table-reclamations button:hover {
+  background-color: #2e7d32;
+}
+
+/* File attachments styling */
+.fichiers-joints {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.fichier-badge {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  border: 1px solid #bbdefb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.no-files {
+  color: #757575;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Icon buttons styling */
+.icon-button {
+  margin: 0 2px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #4caf50;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.icon-button:hover {
+  background-color: #388e3c;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.icon-button.delete {
+  background-color: #f44336;
+}
+
+.icon-button.delete:hover {
+  background-color: #d32f2f;
+}
+
+/* Actions container */
+.actions-container {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Statuts couleurs */
+td.en_attente {
+  color: #f9a825; /* jaune */
+  font-weight: 700;
+}
+
+td.en_cours {
+  color: #2e7d32; /* vert */
+  font-weight: 700;
+}
+
+td.resolu {
+  color: #388e3c; /* vert foncé */
+  font-weight: 700;
+}
+
+td.rejete {
+  color: #b00020; /* rouge */
+  font-weight: 700;
+}
+
+td.ferme {
+  color: #616161; /* gris */
+  font-weight: 700;
+}

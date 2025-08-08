@@ -1,0 +1,103 @@
+<div class="dashboard-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2 class="logo">BAMIS</h2>
+      <p class="logo-subtitle">Gestion des Réclamations</p>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a routerLink="nouvelle-reclamation" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+          <span class="nav-icon">➕</span>
+          <span class="nav-text">Ajouter</span>
+        </a></li>
+        <li><a routerLink="reclamations" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+          <span class="nav-icon">📋</span>
+          <span class="nav-text">Liste</span>
+        </a></li>
+        <li><a routerLink="historique" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">Historique</span>
+        </a></li>
+        <li><a routerLink="boite-reception" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+          <span class="nav-icon">📥</span>
+          <span class="nav-text">Boîte de réception</span>
+        </a></li>
+        <li><a routerLink="profil" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+          <span class="nav-icon">👤</span>
+          <span class="nav-text">Profil</span>
+        </a></li>
+
+        <!-- Séparateur pour les options admin -->
+        @if (isAdmin) {
+          <li class="nav-separator">
+            <span class="separator-text">Administration</span>
+          </li>
+
+          <!-- Liens Admin : afficher seulement si admin -->
+          <li><a routerLink="gestion-categories" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">Gestion catégories</span>
+          </a></li>
+          <li><a routerLink="gestion-destinataires" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">Gestion destinataires</span>
+          </a></li>
+        }
+
+        <!-- Séparateur pour les options destinataire -->
+        @if (isDestinataire) {
+          <li class="nav-separator">
+            <span class="separator-text">Destinataire</span>
+          </li>
+
+          <!-- Lien pour les destinataires -->
+          <li><a routerLink="gestion-reclamations" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">Gestion réclamations</span>
+          </a></li>
+        }
+
+        <li class="nav-separator">
+          <span class="separator-text">Compte</span>
+        </li>
+
+        <li><a routerLink="/login" class="logout-link">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">Déconnexion</span>
+        </a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <!-- Header avec breadcrumbs -->
+    <header class="main-header">
+      <div class="breadcrumb-container">
+        <nav class="breadcrumb">
+          <a routerLink="/dashboard" class="breadcrumb-item">Accueil</a>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-current">{{ currentPage }}</span>
+        </nav>
+      </div>
+      
+      <div class="header-actions">
+        <div class="user-info">
+          <span class="user-role">{{ userRole }}</span>
+          <span class="user-name">{{ userName }}</span>
+        </div>
+        <div class="header-notifications">
+          @if (unreadNotifications > 0) {
+            <span class="notification-badge">{{ unreadNotifications }}</span>
+          }
+          <span class="notification-icon">🔔</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenu principal -->
+    <div class="content-area">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
