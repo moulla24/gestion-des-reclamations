@@ -18,6 +18,7 @@ export class Dashboard implements OnInit {
   currentPage: string = 'Accueil';
   userRole: string = 'Utilisateur';
   userName: string = 'Utilisateur';
+  userEmail: string = 'utilisateur@example.com';
   unreadNotifications: number = 0;
 
   constructor(
@@ -26,6 +27,9 @@ export class Dashboard implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Charger les informations utilisateur depuis le token JWT
+    this.loadUserInfoFromToken();
+    
     // Récupérer rôle depuis le token ou service Auth
     this.isAdmin = this.authService.hasRole('ADMIN');
     this.isDestinataire = this.authService.hasType('DESTINATAIRE');
@@ -45,8 +49,8 @@ export class Dashboard implements OnInit {
       this.updateCurrentPage(event.url);
     });
     
-    // Charger les informations utilisateur
-    this.loadUserInfo();
+    // Charger les informations détaillées du profil depuis l'API
+    this.loadUserProfileFromAPI();
   }
 
   private updateCurrentPage(url: string): void {
@@ -71,9 +75,58 @@ export class Dashboard implements OnInit {
     }
   }
 
-  private loadUserInfo(): void {
-    // Ici vous pouvez charger les informations utilisateur depuis le service
-    // Pour l'instant, on utilise des valeurs par défaut
-    this.userName = this.authService.getCurrentUserEmail() || 'Utilisateur';
+  private loadUserInfoFromToken(): void {
+    // Récupérer les informations de base depuis le token JWT
+    const userInfo = this.authService.getCurrentUserInfo();
+    
+    if (userInfo) {
+      console.log('✅ Informations utilisateur récupérées depuis le token:', userInfo);
+      
+      // Afficher le nom complet
+      if (userInfo.prenom && userInfo.nom) {
+        this.userName = `${userInfo.prenom} ${userInfo.nom}`;
+        console.log('👤 Nom d\'utilisateur affiché (token):', this.userName);
+      }
+      
+      // Afficher l'email
+      if (userInfo.email) {
+        this.userEmail = userInfo.email;
+        console.log('📧 Email utilisateur affiché (token):', this.userEmail);
+      }
+      
+      // Afficher le rôle
+      this.userRole = this.authService.getCurrentUserRole();
+      console.log('🔑 Rôle utilisateur affiché (token):', this.userRole);
+    } else {
+      console.warn('⚠️ Aucune information utilisateur trouvée dans le token');
+      this.userName = 'Utilisateur';
+      this.userEmail = 'utilisateur@example.com';
+      this.userRole = 'Utilisateur';
+    }
+  }
+
+  private loadUserProfileFromAPI(): void {
+    // Charger le profil complet depuis l'API pour des informations détaillées
+    this.authService.getProfil().subscribe({
+      next: (profil) => {
+        console.log('✅ Profil utilisateur chargé depuis l\'API:', profil);
+        
+        // Mettre à jour avec les informations de l'API si elles sont plus complètes
+        if (profil.prenom && profil.nom) {
+          this.userName = `${profil.prenom} ${profil.nom}`;
+          console.log('👤 Nom d\'utilisateur mis à jour (API):', this.userName);
+        }
+        
+        if (profil.role) {
+          this.userRole = this.authService.getCurrentUserRole();
+          console.log('🔑 Rôle utilisateur mis à jour (API):', this.userRole);
+        }
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors du chargement du profil API:', err);
+        // Les informations du token restent affichées
+        console.log('💡 Utilisation des informations du token JWT');
+      }
+    });
   }
 }

@@ -24,9 +24,23 @@
             [disabled]="loading"
           />
         </div>
+        <div class="form-group">
+          <label for="newCategorieDescription">Description de la catégorie</label>
+          <textarea
+            id="newCategorieDescription"
+            [(ngModel)]="newCategorieDescription"
+            name="newCategorieDescription"
+            placeholder="Description détaillée de la catégorie..."
+            rows="3"
+            [disabled]="loading"
+          ></textarea>
+        </div>
         <button type="submit" class="btn-primary" [disabled]="!newCategorieLibelle.trim() || loading">
-          <span *ngIf="loading">⏳</span>
-          <span *ngIf="!loading">➕</span>
+          @if (loading) {
+            <span>⏳</span>
+          } @else {
+            <span>➕</span>
+          }
           Ajouter la catégorie
         </button>
       </form>
@@ -34,14 +48,18 @@
   </div>
 
   <!-- Messages d'erreur/succès -->
-  <div *ngIf="error" class="alert alert-error">
-    <span class="alert-icon">❌</span>
-    {{ error }}
-  </div>
-  <div *ngIf="success" class="alert alert-success">
-    <span class="alert-icon">✅</span>
-    {{ success }}
-  </div>
+  @if (error) {
+    <div class="alert alert-error">
+      <span class="alert-icon">❌</span>
+      {{ error }}
+    </div>
+  }
+  @if (success) {
+    <div class="alert alert-success">
+      <span class="alert-icon">✅</span>
+      {{ success }}
+    </div>
+  }
 
   <!-- Liste des catégories -->
   <div class="categories-section">
@@ -49,84 +67,126 @@
       <h3>Catégories existantes</h3>
       <div class="section-actions">
         <button class="btn-secondary" (click)="loadCategories()" [disabled]="loading">
-          <span *ngIf="loading">⏳</span>
-          <span *ngIf="!loading">🔄</span>
+          @if (loading) {
+            <span>⏳</span>
+          } @else {
+            <span>🔄</span>
+          }
           Actualiser
         </button>
       </div>
     </div>
 
-    <div *ngIf="loading" class="loading-container">
-      <div class="loading-spinner">⏳</div>
-      <p>Chargement des catégories...</p>
-    </div>
-
-    <div *ngIf="!loading && categories.length === 0" class="empty-state">
-      <div class="empty-icon">📂</div>
-      <h4>Aucune catégorie trouvée</h4>
-      <p>Commencez par ajouter votre première catégorie ci-dessus.</p>
-    </div>
-
-    <div *ngIf="!loading && categories.length > 0" class="categories-grid">
-      <div *ngFor="let categorie of categories" class="categorie-card">
-        <div class="categorie-header">
-          <div class="categorie-icon">📁</div>
-          <div class="categorie-info">
-            <h4>{{ categorie.libelle }}</h4>
-            <p class="categorie-id">ID: {{ categorie.id }}</p>
-          </div>
-          <div class="categorie-actions">
-            <button 
-              class="btn-icon btn-edit" 
-              (click)="editCategorie(categorie)"
-              title="Modifier"
-            >
-              ✏️
-            </button>
-            <button 
-              class="btn-icon btn-delete" 
-              (click)="deleteCategorie(categorie.id!)"
-              title="Supprimer"
-            >
-              🗑️
-            </button>
-          </div>
-        </div>
+    @if (loading) {
+      <div class="loading-container">
+        <div class="loading-spinner">⏳</div>
+        <p>Chargement des catégories...</p>
       </div>
-    </div>
+    } @else if (categories.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">📂</div>
+        <h4>Aucune catégorie trouvée</h4>
+        <p>Commencez par ajouter votre première catégorie ci-dessus.</p>
+      </div>
+    } @else {
+      <div class="categories-grid">
+        @for (categorie of categories; track categorie.id) {
+          <div class="categorie-card">
+            <div class="categorie-header">
+              <div class="categorie-icon">📁</div>
+              <div class="categorie-info">
+                <h4>{{ categorie.libelle }}</h4>
+                <p class="categorie-id">ID: {{ categorie.id }}</p>
+                @if (categorie.description) {
+                  <p class="categorie-description">{{ categorie.description }}</p>
+                }
+                <div class="categorie-status">
+                  <span class="status-badge" [ngClass]="categorie.actif ? 'status-active' : 'status-inactive'">
+                    {{ categorie.actif ? 'Actif' : 'Inactif' }}
+                  </span>
+                </div>
+              </div>
+              <div class="categorie-actions">
+                <button 
+                  class="btn-icon btn-edit" 
+                  (click)="editCategorie(categorie)"
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
+                <button 
+                  class="btn-icon btn-delete" 
+                  (click)="deleteCategorie(categorie.id!)"
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
   </div>
 
   <!-- Modal d'édition -->
-  <div *ngIf="editingCategorie" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Modifier la catégorie</h3>
-        <button class="btn-icon btn-close" (click)="cancelEdit()">✕</button>
+  @if (editingCategorie) {
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Modifier la catégorie</h3>
+          <button class="btn-icon btn-close" (click)="cancelEdit()">✕</button>
+        </div>
+        <form (ngSubmit)="updateCategorie()" #editForm="ngForm">
+          <div class="form-group">
+            <label for="editCategorieLibelle">Libellé de la catégorie</label>
+            <input
+              type="text"
+              id="editCategorieLibelle"
+              [(ngModel)]="editingCategorie.libelle"
+              name="editCategorieLibelle"
+              placeholder="Ex: Problème technique, Facturation, etc."
+              required
+              [disabled]="loading"
+            />
+          </div>
+          <div class="form-group">
+            <label for="editCategorieDescription">Description de la catégorie</label>
+            <textarea
+              id="editCategorieDescription"
+              [(ngModel)]="editingCategorie.description"
+              name="editCategorieDescription"
+              placeholder="Description détaillée de la catégorie..."
+              rows="3"
+              [disabled]="loading"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="editingCategorie.actif"
+                name="editCategorieActif"
+                [disabled]="loading"
+              />
+              Catégorie active
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="cancelEdit()" [disabled]="loading">
+              Annuler
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="!editingCategorie.libelle.trim() || loading">
+              @if (loading) {
+                <span>⏳</span>
+              } @else {
+                <span>💾</span>
+              }
+              Enregistrer
+            </button>
+          </div>
+        </form>
       </div>
-      <form (ngSubmit)="updateCategorie()" #editForm="ngForm">
-        <div class="form-group">
-          <label for="editCategorieLibelle">Libellé de la catégorie</label>
-          <input
-            type="text"
-            id="editCategorieLibelle"
-            [(ngModel)]="editingCategorie.libelle"
-            name="editCategorieLibelle"
-            placeholder="Ex: Problème technique, Facturation, etc."
-            required
-            [disabled]="loading"
-          />
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="cancelEdit()" [disabled]="loading">
-            Annuler
-          </button>
-          <button type="submit" class="btn-primary" [disabled]="!editingCategorie.libelle.trim() || loading">
-            <span *ngIf="loading">⏳</span>
-            <span *ngIf="!loading">💾</span>
-            Enregistrer
-          </button>
-        </div>
-      </form>
     </div>
-  </div>
+  }
 </div>

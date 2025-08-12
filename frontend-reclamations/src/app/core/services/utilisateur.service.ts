@@ -47,6 +47,11 @@ export class UtilisateurService {
     return this.http.put<ProfilUtilisateur>(`${this.baseUrl}/profil`, profil);
   }
 
+  // Mettre à jour le profil (alias pour compatibilité)
+  mettreAJourProfil(profil: Partial<ProfilUtilisateur>): Observable<ProfilUtilisateur> {
+    return this.updateProfil(profil);
+  }
+
   // Changer le mot de passe
   changerMotDePasse(ancienMotDePasse: string, nouveauMotDePasse: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/changer-mot-de-passe`, {

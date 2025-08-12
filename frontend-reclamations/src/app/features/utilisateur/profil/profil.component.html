@@ -1,325 +1,225 @@
 <div class="profil-container">
   <div class="profil-header">
-    <h1>👤 Mon Profil</h1>
-    <p>Gérez vos informations personnelles et vos paramètres</p>
+    <h2>Mon Profil</h2>
+    <p>Gérez vos informations personnelles et votre compte</p>
   </div>
 
-  <!-- Messages d'état -->
-  <div *ngIf="loading" class="loading-container">
-    <div class="loading-spinner"></div>
-    <p>Chargement en cours...</p>
-  </div>
+  @if (loading && !profil) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Chargement du profil...</p>
+    </div>
+  }
 
-  <div *ngIf="error" class="error-alert">
-    <div class="error-icon">⚠️</div>
-    <p>{{ error }}</p>
-  </div>
+  @if (error) {
+    <div class="error-alert">
+      <span class="error-icon">⚠️</span>
+      {{ error }}
+    </div>
+  }
 
-  <div *ngIf="success" class="success-alert">
-    <div class="success-icon">✅</div>
-    <p>{{ success }}</p>
-  </div>
+  @if (success) {
+    <div class="success-alert">
+      <span class="success-icon">✅</span>
+      {{ success }}
+    </div>
+  }
 
-  <!-- Navigation des onglets -->
-  <div class="onglets-navigation">
-    <button 
-      class="onglet-btn" 
-      [class.active]="ongletActif === 'profil'"
-      (click)="changerOnglet('profil')"
-    >
-      📋 Informations
-    </button>
-    <button 
-      class="onglet-btn" 
-      [class.active]="ongletActif === 'statistiques'"
-      (click)="changerOnglet('statistiques')"
-    >
-      📊 Statistiques
-    </button>
-    <button 
-      class="onglet-btn" 
-      [class.active]="ongletActif === 'notifications'"
-      (click)="changerOnglet('notifications')"
-    >
-      🔔 Notifications
-    </button>
-    <button 
-      class="onglet-btn" 
-      [class.active]="ongletActif === 'securite'"
-      (click)="changerOnglet('securite')"
-    >
-      🔒 Sécurité
-    </button>
-  </div>
-
-  <!-- Contenu des onglets -->
-  <div class="onglet-content" *ngIf="!loading && profil">
-
-    <!-- Onglet Informations -->
-    <div *ngIf="ongletActif === 'profil'" class="profil-info">
-      <div class="info-card">
-        <div class="card-header">
+  @if (profil) {
+    <div class="profil-content">
+      <!-- Informations du profil -->
+      <div class="profil-section">
+        <div class="section-header">
           <h3>Informations personnelles</h3>
-          <button 
-            *ngIf="!modeEdition" 
-            class="edit-btn" 
-            (click)="activerModeEdition()"
-          >
-            ✏️ Modifier
-          </button>
-        </div>
-
-        <div class="info-content" *ngIf="!modeEdition">
-          <div class="info-row">
-            <span class="info-label">Nom:</span>
-            <span class="info-value">{{ profil.nom }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Prénom:</span>
-            <span class="info-value">{{ profil.prenom }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span class="info-value">{{ profil.email }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Téléphone:</span>
-            <span class="info-value">{{ profil.telephone || 'Non renseigné' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Rôle:</span>
-            <span class="info-value">{{ getRoleLabel(profil.role) }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Type:</span>
-            <span class="info-value">{{ getTypeUtilisateurLabel(profil.type_utilisateur) }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Statut:</span>
-            <span class="info-value" [ngClass]="getStatutCompteClass(profil.actif)">
-              {{ getStatutCompteLabel(profil.actif) }}
-            </span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Date de création:</span>
-            <span class="info-value">{{ profil.dateCreation | date:'fullDate' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Dernière connexion:</span>
-            <span class="info-value">{{ profil.derniereConnexion | date:'medium' }}</span>
-          </div>
-        </div>
-
-        <!-- Formulaire d'édition -->
-        <form *ngIf="modeEdition" (ngSubmit)="sauvegarderProfil()" class="edit-form">
-          <div class="form-group">
-            <label for="nom">Nom</label>
-            <input 
-              type="text" 
-              id="nom" 
-              [(ngModel)]="profilForm.nom" 
-              name="nom" 
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="prenom">Prénom</label>
-            <input 
-              type="text" 
-              id="prenom" 
-              [(ngModel)]="profilForm.prenom" 
-              name="prenom" 
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input 
-              type="email" 
-              id="email" 
-              [(ngModel)]="profilForm.email" 
-              name="email" 
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="telephone">Téléphone</label>
-            <input 
-              type="tel" 
-              id="telephone" 
-              [(ngModel)]="profilForm.telephone" 
-              name="telephone"
-            />
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="save-btn" [disabled]="loading">
-              💾 Sauvegarder
+          @if (!isEditing) {
+            <button class="edit-btn" (click)="activerEdition()">
+              ✏️ Modifier
             </button>
-            <button type="button" class="cancel-btn" (click)="annulerEdition()">
-              ❌ Annuler
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          }
+        </div>
 
-    <!-- Onglet Statistiques -->
-    <div *ngIf="ongletActif === 'statistiques'" class="statistiques-content">
-      <div class="stats-grid" *ngIf="statistiques">
-        <div class="stat-card">
-          <div class="stat-icon">📋</div>
-          <div class="stat-content">
-            <div class="stat-number">{{ statistiques.totalReclamations }}</div>
-            <div class="stat-label">Total réclamations</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">⏳</div>
-          <div class="stat-content">
-            <div class="stat-number">{{ statistiques.reclamationsEnAttente }}</div>
-            <div class="stat-label">En attente</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🔄</div>
-          <div class="stat-content">
-            <div class="stat-number">{{ statistiques.reclamationsEnCours }}</div>
-            <div class="stat-label">En cours</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">✅</div>
-          <div class="stat-content">
-            <div class="stat-number">{{ statistiques.reclamationsResolues }}</div>
-            <div class="stat-label">Résolues</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
-          <div class="stat-content">
-            <div class="stat-number">{{ statistiques.tauxResolution | number:'1.0-1' }}%</div>
-            <div class="stat-label">Taux de résolution</div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">⏱️</div>
-          <div class="stat-content">
-            <div class="stat-number">{{ statistiques.tempsMoyenResolution | number:'1.0-0' }}j</div>
-            <div class="stat-label">Temps moyen résolution</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Onglet Notifications -->
-    <div *ngIf="ongletActif === 'notifications'" class="notifications-content">
-      <div class="notifications-header">
-        <h3>🔔 Mes Notifications</h3>
-        <span class="notifications-count">{{ notifications.length }} notification(s)</span>
-      </div>
-      
-      <div class="notifications-list">
-        <div *ngFor="let notif of notifications" class="notification-item" [class.lue]="notif.lu">
-          <div class="notification-icon">
-            {{ notif.lu ? '📭' : '📬' }}
-          </div>
-          <div class="notification-content">
-            <div class="notification-title">{{ notif.titre }}</div>
-            <div class="notification-message">{{ notif.message }}</div>
-            <div class="notification-date">{{ notif.dateCreation | date:'short' }}</div>
-          </div>
-          <div class="notification-actions">
-            <button 
-              *ngIf="!notif.lu" 
-              class="action-btn" 
-              (click)="marquerNotificationLue(notif.id)"
-              title="Marquer comme lue"
-            >
-              ✅
-            </button>
-            <button 
-              class="action-btn delete" 
-              (click)="supprimerNotification(notif.id)"
-              title="Supprimer"
-            >
-              🗑️
-            </button>
-          </div>
-        </div>
-        
-        <div *ngIf="notifications.length === 0" class="empty-notifications">
-          <div class="empty-icon">📭</div>
-          <p>Aucune notification</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Onglet Sécurité -->
-    <div *ngIf="ongletActif === 'securite'" class="securite-content">
-      <div class="securite-card">
-        <h3>🔒 Sécurité du compte</h3>
-        
-        <div class="securite-section">
-          <h4>Changer le mot de passe</h4>
-          <button 
-            *ngIf="!modeChangementMotDePasse" 
-            class="change-password-btn" 
-            (click)="activerChangementMotDePasse()"
-          >
-            🔑 Changer le mot de passe
-          </button>
-          
-          <form *ngIf="modeChangementMotDePasse" (ngSubmit)="changerMotDePasse()" class="password-form">
-            <div class="form-group">
-              <label for="ancienMotDePasse">Ancien mot de passe</label>
-              <input 
-                type="password" 
-                id="ancienMotDePasse" 
-                [(ngModel)]="motDePasseForm.ancienMotDePasse" 
-                name="ancienMotDePasse" 
-                required
-              />
+        @if (!isEditing) {
+          <div class="profil-info">
+            <div class="info-row">
+              <span class="info-label">Nom :</span>
+              <span class="info-value">{{ profil.nom }}</span>
             </div>
-            <div class="form-group">
-              <label for="nouveauMotDePasse">Nouveau mot de passe</label>
-              <input 
-                type="password" 
-                id="nouveauMotDePasse" 
-                [(ngModel)]="motDePasseForm.nouveauMotDePasse" 
-                name="nouveauMotDePasse" 
-                required
-                minlength="6"
-              />
+            <div class="info-row">
+              <span class="info-label">Prénom :</span>
+              <span class="info-value">{{ profil.prenom }}</span>
             </div>
-            <div class="form-group">
-              <label for="confirmerMotDePasse">Confirmer le nouveau mot de passe</label>
-              <input 
-                type="password" 
-                id="confirmerMotDePasse" 
-                [(ngModel)]="motDePasseForm.confirmerMotDePasse" 
-                name="confirmerMotDePasse" 
-                required
-              />
+            <div class="info-row">
+              <span class="info-label">Email :</span>
+              <span class="info-value">{{ profil.email }}</span>
             </div>
+            <div class="info-row">
+              <span class="info-label">Téléphone :</span>
+              <span class="info-value">{{ profil.telephone }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Rôle :</span>
+              <span class="info-value role-badge">{{ getRoleDisplay() }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Statut :</span>
+              <span class="info-value status-badge {{ getStatusClass() }}">
+                {{ getStatusDisplay() }}
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Membre depuis :</span>
+              <span class="info-value">{{ profil.dateCreation | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Dernière connexion :</span>
+              <span class="info-value">{{ profil.derniereConnexion | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        } @else {
+          <form class="edit-form" (ngSubmit)="sauvegarderProfil()">
+            <div class="form-group">
+              <label for="nom">Nom</label>
+              <input
+                type="text"
+                id="nom"
+                [(ngModel)]="editForm.nom"
+                name="nom"
+                required
+                #nomInput="ngModel"
+              />
+              @if (nomInput.invalid && nomInput.touched) {
+                <div class="error-message">Le nom est requis</div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="prenom">Prénom</label>
+              <input
+                type="text"
+                id="prenom"
+                [(ngModel)]="editForm.prenom"
+                name="prenom"
+                required
+                #prenomInput="ngModel"
+              />
+              @if (prenomInput.invalid && prenomInput.touched) {
+                <div class="error-message">Le prénom est requis</div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="telephone">Téléphone</label>
+              <input
+                type="tel"
+                id="telephone"
+                [(ngModel)]="editForm.telephone"
+                name="telephone"
+                required
+                #telInput="ngModel"
+              />
+              @if (telInput.invalid && telInput.touched) {
+                <div class="error-message">Le téléphone est requis</div>
+              }
+            </div>
+
             <div class="form-actions">
               <button type="submit" class="save-btn" [disabled]="loading">
-                💾 Changer le mot de passe
+                {{ loading ? 'Sauvegarde...' : 'Sauvegarder' }}
               </button>
-              <button type="button" class="cancel-btn" (click)="annulerChangementMotDePasse()">
-                ❌ Annuler
+              <button type="button" class="cancel-btn" (click)="annulerEdition()">
+                Annuler
               </button>
             </div>
           </form>
+        }
+      </div>
+
+      <!-- Statistiques -->
+      @if (statistiques) {
+        <div class="profil-section">
+          <h3>Mes Statistiques</h3>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number">{{ statistiques.totalReclamations }}</div>
+              <div class="stat-label">Total Réclamations</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">{{ statistiques.reclamationsEnAttente }}</div>
+              <div class="stat-label">En Attente</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">{{ statistiques.reclamationsEnCours }}</div>
+              <div class="stat-label">En Cours</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">{{ statistiques.reclamationsResolues }}</div>
+              <div class="stat-label">Résolues</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">{{ statistiques.tauxResolution }}%</div>
+              <div class="stat-label">Taux de Résolution</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">{{ statistiques.tempsMoyenResolution }}j</div>
+              <div class="stat-label">Temps Moyen</div>
+            </div>
+          </div>
         </div>
-        
-        <div class="securite-section danger-zone">
-          <h4>⚠️ Zone dangereuse</h4>
-          <p>Ces actions sont irréversibles. Soyez prudent.</p>
-          <button class="danger-btn" (click)="desactiverCompte()">
-            🚫 Désactiver mon compte
+      }
+
+      <!-- Changement de mot de passe -->
+      <div class="profil-section">
+        <h3>Changer le mot de passe</h3>
+        <form class="password-form" (ngSubmit)="changerMotDePasse()">
+          <div class="form-group">
+            <label for="ancienMotDePasse">Ancien mot de passe</label>
+            <input
+              type="password"
+              id="ancienMotDePasse"
+              [(ngModel)]="changePassword.ancienMotDePasse"
+              name="ancienMotDePasse"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="nouveauMotDePasse">Nouveau mot de passe</label>
+            <input
+              type="password"
+              id="nouveauMotDePasse"
+              [(ngModel)]="changePassword.nouveauMotDePasse"
+              name="nouveauMotDePasse"
+              required
+              minlength="6"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="confirmerMotDePasse">Confirmer le nouveau mot de passe</label>
+            <input
+              type="password"
+              id="confirmerMotDePasse"
+              [(ngModel)]="changePassword.confirmerMotDePasse"
+              name="confirmerMotDePasse"
+              required
+            />
+          </div>
+
+          <button type="submit" class="change-password-btn" [disabled]="loading">
+            {{ loading ? 'Changement...' : 'Changer le mot de passe' }}
           </button>
-        </div>
+        </form>
+      </div>
+
+      <!-- Actions du compte -->
+      <div class="profil-section danger-zone">
+        <h3>Zone de danger</h3>
+        <p class="warning-text">⚠️ Ces actions sont irréversibles</p>
+        
+        <button class="danger-btn" (click)="desactiverCompte()" [disabled]="loading">
+          {{ loading ? 'Désactivation...' : 'Désactiver mon compte' }}
+        </button>
       </div>
     </div>
-  </div>
+  }
 </div>

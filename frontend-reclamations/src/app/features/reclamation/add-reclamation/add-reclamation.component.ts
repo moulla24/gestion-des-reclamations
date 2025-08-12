@@ -35,27 +35,179 @@ export class AddReclamationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
+    // Test temporaire pour diagnostiquer les problèmes d'API
+    this.testAPIConnectivity();
+    // Test de différentes URLs
+    this.testDifferentURLs();
   }
 
-  // Charger toutes les catégories au démarrage
+  // Méthode temporaire pour tester la connectivité API
+  private testAPIConnectivity(): void {
+    console.log('🧪 Test de connectivité API...');
+    console.log('URL de base utilisateur:', 'http://localhost:8080/api/user');
+    
+    // Test direct avec fetch pour vérifier la connectivité
+    fetch('http://localhost:8080/api/user/categories')
+      .then(response => {
+        console.log('✅ Test direct categories - Status:', response.status);
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      })
+      .then(data => {
+        console.log('✅ Test direct categories - Données reçues:', data);
+      })
+      .catch(error => {
+        console.error('❌ Test direct categories - Erreur:', error);
+      });
+
+    // Test des destinataires
+    fetch('http://localhost:8080/api/user/destinataires')
+      .then(response => {
+        console.log('✅ Test direct destinataires - Status:', response.status);
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      })
+      .then(data => {
+        console.log('✅ Test direct destinataires - Données reçues:', data);
+      })
+      .catch(error => {
+        console.error('❌ Test direct destinataires - Erreur:', error);
+      });
+  }
+
+  // Charger toutes les catégories depuis la base de données
   loadCategories(): void {
+    console.log('🔄 Chargement des catégories depuis la base de données...');
+    console.log('🔍 URL utilisée:', 'http://localhost:8080/api/user/categories');
+    this.loading = true;
+    this.error = '';
+    
+    // Test avec différentes approches
+    console.log('🧪 Test 1: Via le service Angular');
     this.service.getCategories().subscribe({
-      next: (cats) => this.categories = cats,
-      error: () => this.error = 'Erreur lors du chargement des catégories.'
+      next: (cats) => {
+        console.log('✅ Catégories reçues via service Angular:', cats);
+        console.log('🔍 Type de données:', typeof cats);
+        console.log('🔍 Est-ce un array?', Array.isArray(cats));
+        console.log('🔍 Structure de la première catégorie:', cats[0]);
+        
+        this.categories = cats;
+        this.loading = false;
+        console.log(`✅ Nombre de catégories chargées: ${cats.length}`);
+        
+        if (cats.length === 0) {
+          this.error = 'Aucune catégorie disponible. Veuillez contacter l\'administrateur.';
+          console.log('⚠️ Aucune catégorie trouvée');
+        } else {
+          console.log('✅ Catégories chargées avec succès');
+          // Afficher chaque catégorie pour debug
+          cats.forEach((cat, index) => {
+            console.log(`📋 Catégorie ${index + 1}:`, cat);
+          });
+        }
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors du chargement des catégories via service Angular:', err);
+        this.error = 'Impossible de charger les catégories depuis la base de données. Vérifiez votre connexion.';
+        this.loading = false;
+        this.categories = [];
+        
+        // Test alternatif avec fetch
+        console.log('🧪 Test 2: Via fetch direct');
+        this.testFetchCategories();
+      }
     });
   }
 
-  // Lorsqu'une catégorie est sélectionnée, charger les destinataires associés
+  // Test alternatif avec fetch
+  private testFetchCategories(): void {
+    fetch('http://localhost:8080/api/user/categories')
+      .then(response => {
+        console.log('🔍 Fetch - Status:', response.status);
+        console.log('🔍 Fetch - Headers:', response.headers);
+        return response.json();
+      })
+      .then(data => {
+        console.log('✅ Fetch - Données reçues:', data);
+        this.categories = data;
+        this.loading = false;
+      })
+      .catch(error => {
+        console.error('❌ Fetch - Erreur:', error);
+        this.loading = false;
+      });
+  }
+
+  // Test avec différentes URLs pour diagnostiquer le problème
+  private testDifferentURLs(): void {
+    console.log('🧪 Test de différentes URLs...');
+    
+    const urlsToTest = [
+      'http://localhost:8080/api/user/categories',
+      'http://localhost:8080/api/categories',
+      'http://localhost:8080/api/user/admin/categories',
+      'http://localhost:8080/api/reclamations/categories'
+    ];
+    
+    urlsToTest.forEach(url => {
+      console.log(`🔍 Test de l'URL: ${url}`);
+      fetch(url)
+        .then(response => {
+          console.log(`✅ ${url} - Status: ${response.status}`);
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error(`HTTP ${response.status}`);
+          }
+        })
+        .then(data => {
+          console.log(`✅ ${url} - Données:`, data);
+        })
+        .catch(error => {
+          console.log(`❌ ${url} - Erreur:`, error.message);
+        });
+    });
+  }
+
+  // Lorsqu'une catégorie est sélectionnée, charger les destinataires associés depuis la base de données
   onCategorieChange(): void {
     this.error = '';
     this.destinataires = [];
     this.selectedDestinataireId = null;
 
-    if (!this.selectedCategorieId) return;
+    if (!this.selectedCategorieId) {
+      console.log('Aucune catégorie sélectionnée');
+      return;
+    }
 
+    console.log('🔄 Chargement des destinataires depuis la base de données pour la catégorie:', this.selectedCategorieId);
+    this.loading = true;
+    
     this.service.getDestinatairesByCategorie(this.selectedCategorieId).subscribe({
-      next: (dest) => this.destinataires = dest,
-      error: () => this.error = 'Erreur lors du chargement des destinataires.'
+      next: (dest) => {
+        console.log('✅ Destinataires reçus depuis la base de données:', dest);
+        this.destinataires = dest;
+        this.loading = false;
+        
+        if (dest.length === 0) {
+          console.log('⚠️ Aucun destinataire trouvé pour cette catégorie');
+          this.error = 'Aucun destinataire disponible pour cette catégorie. Veuillez contacter l\'administrateur.';
+        } else {
+          console.log(`✅ ${dest.length} destinataire(s) trouvé(s) pour la catégorie ${this.selectedCategorieId}`);
+        }
+      },
+      error: (err) => {
+        console.error('❌ Erreur lors du chargement des destinataires depuis la base de données:', err);
+        this.error = 'Impossible de charger les destinataires depuis la base de données. Vérifiez votre connexion.';
+        this.loading = false;
+        this.destinataires = []; // Pas de fallback, on veut les vraies données
+      }
     });
   }
 

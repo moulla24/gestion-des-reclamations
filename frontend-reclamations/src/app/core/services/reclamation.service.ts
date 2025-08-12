@@ -5,6 +5,7 @@ import { Destinataire } from 'src/app/models/destinataire.model';
 import { HttpClient } from '@angular/common/http';
 import { Reclamation } from 'src/app/models/reclamation.model';
 import { SuiviReclamation } from 'src/app/models/suivi-reclamation.model';
+import { map } from 'rxjs/operators';
 
 export interface ReclamationUpdateDTO {
   titre: string;
@@ -32,6 +33,18 @@ export interface ReclamationResponseDTO {
   nomCategorie: string;
   nomDestinataire: string;
   fichiersJoints?: FichierJoint[];
+}
+
+// Interface étendue avec les détails complets du destinataire
+export interface ReclamationResponseExtendedDTO extends ReclamationResponseDTO {
+  destinataire?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    email: string;
+    service: string;
+    categorie: string;
+  };
 }
 
 export interface SuiviReclamationResponseDTO {
@@ -77,6 +90,93 @@ export class ReclamationService {
   // Récupérer les réclamations de l'utilisateur connecté
   getMesReclamations(): Observable<ReclamationResponseDTO[]> {
     return this.http.get<ReclamationResponseDTO[]>(`${this.baseUrlUser}/reclamations`);
+  }
+
+  // Récupérer les réclamations avec les détails complets des destinataires
+  getMesReclamationsAvecDestinataires(): Observable<ReclamationResponseExtendedDTO[]> {
+    return this.http.get<ReclamationResponseExtendedDTO[]>(`${this.baseUrlUser}/reclamations/avec-destinataires`);
+  }
+
+  // Récupérer les réclamations avec les détails complets des destinataires (fallback)
+  getMesReclamationsAvecDestinatairesFallback(): Observable<ReclamationResponseExtendedDTO[]> {
+    return this.http.get<ReclamationResponseDTO[]>(`${this.baseUrlUser}/reclamations`).pipe(
+      map(reclamations => {
+        // Transformer les réclamations pour inclure les détails des destinataires
+        return reclamations.map(rec => {
+          // Analyser le nomDestinataire pour extraire les informations
+          const nomDestinataire = rec.nomDestinataire || '';
+          let prenom = '';
+          let nom = '';
+          let service = '';
+          
+          // Si le nomDestinataire contient des espaces, on essaie de l'analyser
+          if (nomDestinataire.includes(' ')) {
+            const parts = nomDestinataire.split(' ');
+            if (parts.length >= 2) {
+              // Format possible: "Prénom Nom" ou "Service Prénom Nom"
+              if (parts.length === 2) {
+                // "Prénom Nom"
+                prenom = parts[0];
+                nom = parts[1];
+              } else {
+                // "Service Prénom Nom" ou "Prénom Nom Service"
+                // On essaie de détecter le service
+                const lastPart = parts[parts.length - 1];
+                const firstPart = parts[0];
+                
+                // Si la dernière partie ressemble à un service (commence par une majuscule et contient des caractères spécifiques)
+                if (lastPart.match(/^(Service|Département|IT|RH|Finance|Marketing|Ventes|Support)/i)) {
+                  service = lastPart;
+                  prenom = parts[1];
+                  nom = parts.slice(2, -1).join(' ');
+                } else if (firstPart.match(/^(Service|Département|IT|RH|Finance|Marketing|Ventes|Support)/i)) {
+                  service = firstPart;
+                  prenom = parts[1];
+                  nom = parts.slice(2).join(' ');
+                } else {
+                  // Format inconnu, on prend les deux premiers comme prénom/nom
+                  prenom = parts[0];
+                  nom = parts.slice(1).join(' ');
+                }
+              }
+            }
+          } else {
+            // Pas d'espaces, c'est probablement juste un nom ou un service
+            if (nomDestinataire.match(/^(Service|Département|IT|RH|Finance|Marketing|Ventes|Support)/i)) {
+              service = nomDestinataire;
+              nom = nomDestinataire;
+            } else {
+              nom = nomDestinataire;
+            }
+          }
+          
+          // Si on n'a pas pu extraire de prénom, on utilise le nom complet
+          if (!prenom && nom) {
+            prenom = nom;
+          }
+          
+          // Fallback si on n'a rien pu extraire
+          if (!prenom && !nom) {
+            prenom = nomDestinataire;
+            nom = nomDestinataire;
+          }
+          
+          console.log(`🔍 Parsing destinataire: "${nomDestinataire}" → Prénom: "${prenom}", Nom: "${nom}", Service: "${service}"`);
+          
+          return {
+            ...rec,
+            destinataire: {
+              id: 0, // ID inconnu
+              nom: nom || nomDestinataire,
+              prenom: prenom || nomDestinataire,
+              email: '',
+              service: service || rec.nomCategorie,
+              categorie: rec.nomCategorie
+            }
+          } as ReclamationResponseExtendedDTO;
+        });
+      })
+    );
   }
 
   // Récupérer une réclamation par ID

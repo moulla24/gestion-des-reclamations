@@ -183,3 +183,37 @@
     font-size: 24px;
   }
 }
+
+/* Test connection button */
+.test-connection-btn {
+  width: 100%;
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+}
+
+.test-connection-btn:hover:not(:disabled) {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.test-connection-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.connection-status {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+}

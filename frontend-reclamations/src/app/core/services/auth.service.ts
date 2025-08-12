@@ -38,11 +38,20 @@ export class AuthService {
   constructor() {}
 
   login(request: AuthRequest) {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, request).pipe(
+    // Envoyer exactement ce que le backend attend
+    const requestData = {
+      email: request.email,
+      motDePasse: request.motDePasse // 'm' minuscule comme attendu par le backend
+    };
+    
+    console.log('🔐 AuthService.login - URL:', `${this.apiUrl}/login`);
+    console.log('🔐 AuthService.login - Request data:', requestData);
+    
+    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, requestData).pipe(
       tap(response => {
+        console.log('✅ AuthService.login - Response reçue:', response);
         this.setToken(response.token);
         this.isAuthenticated.set(true);
-        console.log('Connexion réussie, token:', response.token);
       })
     );
   }
@@ -67,7 +76,79 @@ export class AuthService {
     return this.http.get<ProfilUtilisateur>('http://localhost:8080/api/user/profil');
   }
 
+  // Récupérer les informations de base depuis le token JWT
+  getCurrentUserInfo(): { nom: string; prenom: string; email: string; role: string; type: string } | null {
+    const token = this.getToken();
+    if (!token) return null;
+    
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return {
+        nom: payload.nom || '',
+        prenom: payload.prenom || '',
+        email: payload.email || payload.sub || '',
+        role: payload.role || '',
+        type: payload.type || payload.type_utilisateur || ''
+      };
+    } catch (error) {
+      console.error('❌ Erreur lors du décodage du token:', error);
+      return null;
+    }
+  }
 
+  // Récupérer le nom complet de l'utilisateur depuis le token
+  getCurrentUserName(): string {
+    const userInfo = this.getCurrentUserInfo();
+    if (userInfo && userInfo.prenom && userInfo.nom) {
+      return `${userInfo.prenom} ${userInfo.nom}`;
+    }
+    return 'Utilisateur';
+  }
+
+  // Récupérer l'email de l'utilisateur depuis le token
+  getCurrentUserEmail(): string | null {
+    const userInfo = this.getCurrentUserInfo();
+    return userInfo?.email || null;
+  }
+
+  // Récupérer le rôle de l'utilisateur depuis le token
+  getCurrentUserRole(): string {
+    const userInfo = this.getCurrentUserInfo();
+    if (userInfo?.role) {
+      switch (userInfo.role.toUpperCase()) {
+        case 'ADMIN': return 'Administrateur';
+        case 'UTILISATEUR': return 'Utilisateur';
+        case 'DESTINATAIRE': return 'Destinataire';
+        default: return 'Utilisateur';
+      }
+    }
+    return 'Utilisateur';
+  }
+
+  // Récupérer le type d'utilisateur depuis le token
+  getCurrentUserType(): string {
+    const userInfo = this.getCurrentUserInfo();
+    if (userInfo?.type) {
+      switch (userInfo.type.toUpperCase()) {
+        case 'DESTINATAIRE': return 'Destinataire';
+        case 'UTILISATEUR': return 'Utilisateur';
+        default: return 'Utilisateur';
+      }
+    }
+    return 'Utilisateur';
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole('ADMIN');
+  }
+
+  isDestinataire(): boolean {
+    return this.hasType('DESTINATAIRE');
+  }
+
+  isUtilisateur(): boolean {
+    return this.hasType('UTILISATEUR');
+  }
 
   private setToken(token: string): void {
     localStorage.setItem('token', token);
@@ -101,22 +182,5 @@ export class AuthService {
     } catch {
       return false;
     }
-  }
-
-  getCurrentUserEmail(): string | null {
-    // Implémentez cette méthode selon votre système d'authentification
-    return localStorage.getItem('userEmail');
-  }
-
-  isAdmin(): boolean {
-    return this.hasRole('ADMIN');
-  }
-
-  isDestinataire(): boolean {
-    return this.hasType('DESTINATAIRE');
-  }
-
-  isUtilisateur(): boolean {
-    return this.hasType('UTILISATEUR');
   }
 }

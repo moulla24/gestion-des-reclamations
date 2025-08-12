@@ -1,0 +1,59 @@
+
+Exercice 1  
+Ecrire un programme en Python qui demande à l'utilisateur de saisir deux nombres a et b et
+ de lui afficher leur somme : a + b et le max de deux
+
+
+
+
+Exercice 2  
+Ecrire un programme en langage Python qui demande à l'utilisateur de saisir son nombre entier
+ et de lui afficher si ce nombre est pair ou impair
+
+Exercice3  Ecrire un programme en langage Python qui demande à l'utilisateur de saisir son âge et de
+ lui afficher le message « vous êtes Majeur ! » si l’âge tapé est supérieur ou égale à 18
+ et le message « vous êtes mineur ! » si l’âge tapé est inférieur à 18
+
+
+
+Exercice  4
+Écrire une fonction Python nommée somme_entiers qui demande à l'utilisateur
+ de saisir un entier positif n, calcule la somme des entiers de 1 à n et retourne le résultat.
+
+ Exercice 5 : Numpy – statistiques
+
+Énoncé :
+	1.	Crée une liste de 6 notes (par exemple [12, 15, 18, 10, 17, 14])
+	2.	Utilise numpy pour afficher :
+	•	La moyenne
+	•	La note la plus haute
+	•	L’écart-type
+
+
+exercice 6 (pandas):
+
+Tableau complet :
+     Nom  Age
+0    Ali   20
+1  Mouna   22
+2  Amine   21
+Afficher le tableau complet.
+
+Afficher uniquement la colonne "Nom".
+
+Afficher uniquement la colonne "Age".
+
+Afficher le nom de la 2ᵉ personne (indice 1).
+
+Afficher l’âge de la personne appelée "Amine".
+
+Ajouter une nouvelle colonne "Ville" avec ces données :
+
+Ali → Nouakchott
+
+Mouna → Rosso
+
+Amine → Nouadhibou
+
+Afficher le nouveau tableau.
+

@@ -2,12 +2,16 @@
   <h2>Nouvelle Réclamation</h2>
 
   <!-- Success/Error Messages -->
-  <div *ngIf="success" class="success-message">
-    {{ success }}
-  </div>
-  <div *ngIf="error" class="error-message">
-    {{ error }}
-  </div>
+  @if (success) {
+    <div class="success-message">
+      {{ success }}
+    </div>
+  }
+  @if (error) {
+    <div class="error-message">
+      {{ error }}
+    </div>
+  }
 
   <form (ngSubmit)="soumettre()" #reclamationForm="ngForm">
 
@@ -21,7 +25,9 @@
       required
       #titreInput="ngModel"
     />
-    <div *ngIf="titreInput.invalid && titreInput.touched" class="error">Le titre est requis.</div>
+    @if (titreInput.invalid && titreInput.touched) {
+      <div class="error">Le titre est requis.</div>
+    }
 
     <label for="description">Description</label>
     <textarea
@@ -33,7 +39,9 @@
       required
       #descInput="ngModel"
     ></textarea>
-    <div *ngIf="descInput.invalid && descInput.touched" class="error">La description est requise.</div>
+    @if (descInput.invalid && descInput.touched) {
+      <div class="error">La description est requise.</div>
+    }
 
     <label for="categorieSelect">Choisir une catégorie</label>
     <select
@@ -45,11 +53,15 @@
       #categorieSelectInput="ngModel"
     >
       <option [ngValue]="null" disabled>-- Sélectionner --</option>
-      <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.libelle }}</option>
+      @for (c of categories; track c.id) {
+        <option [value]="c.id">{{ c.libelle }}</option>
+      }
     </select>
-    <div *ngIf="categorieSelectInput.invalid && categorieSelectInput.touched" class="error">
-      Veuillez sélectionner une catégorie ou en créer une.
-    </div>
+    @if (categorieSelectInput.invalid && categorieSelectInput.touched) {
+      <div class="error">
+        Veuillez sélectionner une catégorie ou en créer une.
+      </div>
+    }
 
     <label for="destinataireSelect">Choisir un destinataire</label>
     <select
@@ -61,13 +73,21 @@
       #destinataireSelectInput="ngModel"
     >
       <option [ngValue]="null" disabled>-- Sélectionner --</option>
-      <option *ngFor="let d of destinataires" [ngValue]="d.id">
-        {{ d.nom || d.prenom || d.email }}
-      </option>
+      @if (destinataires.length === 0 && selectedCategorieId) {
+        <option disabled>Aucun destinataire trouvé pour cette catégorie</option>
+      } @else {
+        @for (d of destinataires; track d.id) {
+          <option [value]="d.id">
+            {{ d.prenom }} {{ d.nom }} - {{ d.service }}
+          </option>
+        }
+      }
     </select>
-    <div *ngIf="destinataireSelectInput.invalid && destinataireSelectInput.touched" class="error">
-      Veuillez sélectionner un destinataire ou en créer un.
-    </div>
+    @if (destinataireSelectInput.invalid && destinataireSelectInput.touched) {
+      <div class="error">
+        Veuillez sélectionner un destinataire ou en créer un.
+      </div>
+    }
 
     <label for="fichierJoint">Ajouter un fichier joint (optionnel)</label>
     <div class="file-upload-section">
@@ -77,19 +97,23 @@
         (change)="handleFileInput($event)"
         accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx,.txt"
       />
-      <div *ngIf="fileName" class="selected-file">
-        <span class="file-name">📎 {{ fileName }}</span>
-        <button type="button" class="clear-file-btn" (click)="clearFile()" title="Supprimer le fichier">
-          ✕
-        </button>
-      </div>
+      @if (fileName) {
+        <div class="selected-file">
+          <span class="file-name">📎 {{ fileName }}</span>
+          <button type="button" class="clear-file-btn" (click)="clearFile()" title="Supprimer le fichier">
+            ✕
+          </button>
+        </div>
+      }
       <small class="file-info">
         Types acceptés : PDF, images, documents Word/Excel, texte. Taille max : 10MB
       </small>
     </div>
 
     <button type="submit" [disabled]="reclamationForm.invalid || loading" class="submit-btn">
-      <span *ngIf="loading" class="loading-spinner">⏳</span>
+      @if (loading) {
+        <span class="loading-spinner">⏳</span>
+      }
       {{ loading ? 'Soumission en cours...' : 'Soumettre' }}
     </button>
   </form>

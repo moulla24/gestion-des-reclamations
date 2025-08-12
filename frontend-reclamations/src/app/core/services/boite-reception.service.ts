@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthService } from './auth.service';
 
 export interface MessageReception {
   id: number;
@@ -17,6 +18,20 @@ export interface MessageReception {
   pieceJointe?: string;
   taillePieceJointe?: number;
   reclamationId?: number;
+}
+
+export interface ReclamationDestinataire {
+  id: number;
+  titre: string;
+  description: string;
+  dateCreation: string;
+  statut: string;
+  priorite: 'URGENTE' | 'HAUTE' | 'NORMALE' | 'BASSE';
+  expediteur: string;
+  categorie: string;
+  lu: boolean;
+  dateLecture?: string;
+  fichierJoint?: string;
 }
 
 export interface StatistiquesBoiteReception {
@@ -36,9 +51,15 @@ export interface StatistiquesBoiteReception {
 })
 export class BoiteReceptionService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private readonly baseUrl = 'http://localhost:8080/api/user/boite-reception';
 
-  // Récupérer tous les messages
+  // Récupérer les réclamations destinées au destinataire connecté
+  getReclamationsDestinataire(): Observable<ReclamationDestinataire[]> {
+    return this.http.get<ReclamationDestinataire[]>(`${this.baseUrl}/reclamations-destinataire`);
+  }
+
+  // Récupérer tous les messages (pour compatibilité)
   getMessages(): Observable<MessageReception[]> {
     return this.http.get<MessageReception[]>(this.baseUrl);
   }
@@ -46,6 +67,11 @@ export class BoiteReceptionService {
   // Récupérer les statistiques
   getStatistiques(): Observable<StatistiquesBoiteReception> {
     return this.http.get<StatistiquesBoiteReception>(`${this.baseUrl}/statistiques`);
+  }
+
+  // Marquer une réclamation comme lue
+  marquerReclamationCommeLue(reclamationId: number): Observable<any> {
+    return this.http.put(`${this.baseUrl}/reclamations/${reclamationId}/lu`, {});
   }
 
   // Marquer un message comme lu
@@ -88,8 +114,18 @@ export class BoiteReceptionService {
     return this.http.get<MessageReception[]>(`${this.baseUrl}/recherche?q=${encodeURIComponent(terme)}`);
   }
 
+  // Rechercher des réclamations
+  rechercherReclamations(terme: string): Observable<ReclamationDestinataire[]> {
+    return this.http.get<ReclamationDestinataire[]>(`${this.baseUrl}/reclamations-recherche?q=${encodeURIComponent(terme)}`);
+  }
+
   // Télécharger une pièce jointe
   telechargerPieceJointe(messageId: number): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/${messageId}/piece-jointe`, { responseType: 'blob' });
+  }
+
+  // Télécharger un fichier joint d'une réclamation
+  telechargerFichierReclamation(reclamationId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/reclamations/${reclamationId}/fichier`, { responseType: 'blob' });
   }
 }

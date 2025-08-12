@@ -1,7 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BoiteReceptionService, MessageReception, StatistiquesBoiteReception } from '../../core/services/boite-reception.service';
+import { BoiteReceptionService, ReclamationDestinataire, StatistiquesBoiteReception } from '../../core/services/boite-reception.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-boite-reception',
@@ -12,14 +13,15 @@ import { BoiteReceptionService, MessageReception, StatistiquesBoiteReception } f
 })
 export class BoiteReceptionComponent implements OnInit {
   private boiteReceptionService = inject(BoiteReceptionService);
+  private authService = inject(AuthService);
 
-  messages: MessageReception[] = [];
-  selectedMessage: MessageReception | null = null;
+  reclamations: ReclamationDestinataire[] = [];
+  selectedReclamation: ReclamationDestinataire | null = null;
   statistiques: StatistiquesBoiteReception | null = null;
   
   // Filtres et recherche
   searchTerm = '';
-  typeFilter = '';
+  statutFilter = '';
   prioriteFilter = '';
   luFilter = '';
   
@@ -28,12 +30,40 @@ export class BoiteReceptionComponent implements OnInit {
   error = '';
   
   // Sélection multiple
-  selectedMessages: number[] = [];
+  selectedReclamations: number[] = [];
   selectAll = false;
 
+  // Type d'utilisateur
+  isDestinataire = false;
+
   ngOnInit(): void {
-    this.chargerMessages();
+    this.isDestinataire = this.authService.isDestinataire();
+    
+    if (this.isDestinataire) {
+      this.chargerReclamationsDestinataire();
+    } else {
+      this.chargerMessages();
+    }
+    
     this.chargerStatistiques();
+  }
+
+  chargerReclamationsDestinataire(): void {
+    this.loading = true;
+    this.error = '';
+    
+    this.boiteReceptionService.getReclamationsDestinataire().subscribe({
+      next: (data) => {
+        this.reclamations = data;
+        this.loading = false;
+        console.log('✅ Réclamations destinataire chargées:', this.reclamations);
+      },
+      error: (err) => {
+        this.error = 'Erreur lors du chargement des réclamations';
+        this.loading = false;
+        console.error('Erreur de chargement des réclamations:', err);
+      }
+    });
   }
 
   chargerMessages(): void {
@@ -42,7 +72,20 @@ export class BoiteReceptionComponent implements OnInit {
     
     this.boiteReceptionService.getMessages().subscribe({
       next: (data) => {
-        this.messages = data;
+        // Convertir les messages en réclamations pour l'affichage
+        this.reclamations = data.map(msg => ({
+          id: msg.id,
+          titre: msg.titre || msg.sujet,
+          description: msg.contenu,
+          dateCreation: msg.dateEnvoi,
+          statut: msg.type,
+          priorite: msg.priorite,
+          expediteur: msg.expediteur,
+          categorie: 'Message',
+          lu: msg.lu,
+          dateLecture: msg.dateLecture,
+          fichierJoint: msg.pieceJointe
+        }));
         this.loading = false;
       },
       error: (err) => {
@@ -64,190 +107,183 @@ export class BoiteReceptionComponent implements OnInit {
     });
   }
 
-  selectMessage(message: MessageReception): void {
-    this.selectedMessage = message;
-    if (!message.lu) {
-      this.marquerCommeLu(message.id);
+  selectReclamation(reclamation: ReclamationDestinataire): void {
+    this.selectedReclamation = reclamation;
+    if (!reclamation.lu) {
+      this.marquerCommeLue(reclamation.id);
     }
   }
 
-  marquerCommeLu(messageId: number): void {
-    this.boiteReceptionService.marquerCommeLu(messageId).subscribe({
-      next: () => {
-        const message = this.messages.find(m => m.id === messageId);
-        if (message) {
-          message.lu = true;
-        }
-        this.chargerStatistiques();
-      },
-      error: (err) => {
-        console.error('Erreur marquer comme lu:', err);
-      }
-    });
-  }
-
-  marquerCommeNonLu(messageId: number): void {
-    this.boiteReceptionService.marquerCommeNonLu(messageId).subscribe({
-      next: () => {
-        const message = this.messages.find(m => m.id === messageId);
-        if (message) {
-          message.lu = false;
-        }
-        this.chargerStatistiques();
-      },
-      error: (err) => {
-        console.error('Erreur marquer comme non lu:', err);
-      }
-    });
-  }
-
-  supprimerMessage(messageId: number): void {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
-      this.boiteReceptionService.supprimerMessage(messageId).subscribe({
+  marquerCommeLue(reclamationId: number): void {
+    if (this.isDestinataire) {
+      this.boiteReceptionService.marquerReclamationCommeLue(reclamationId).subscribe({
         next: () => {
-          this.messages = this.messages.filter(m => m.id !== messageId);
-          if (this.selectedMessage?.id === messageId) {
-            this.selectedMessage = null;
+          const reclamation = this.reclamations.find(r => r.id === reclamationId);
+          if (reclamation) {
+            reclamation.lu = true;
+            reclamation.dateLecture = new Date().toISOString();
           }
           this.chargerStatistiques();
         },
         error: (err) => {
-          console.error('Erreur suppression message:', err);
+          console.error('Erreur marquer comme lue:', err);
+        }
+      });
+    } else {
+      this.boiteReceptionService.marquerCommeLu(reclamationId).subscribe({
+        next: () => {
+          const reclamation = this.reclamations.find(r => r.id === reclamationId);
+          if (reclamation) {
+            reclamation.lu = true;
+          }
+          this.chargerStatistiques();
+        },
+        error: (err) => {
+          console.error('Erreur marquer comme lu:', err);
         }
       });
     }
   }
 
-  toggleSelectMessage(messageId: number): void {
-    const index = this.selectedMessages.indexOf(messageId);
-    if (index > -1) {
-      this.selectedMessages.splice(index, 1);
+  marquerCommeNonLue(reclamationId: number): void {
+    if (this.isDestinataire) {
+      // Pour les destinataires, on peut marquer comme non lue
+      const reclamation = this.reclamations.find(r => r.id === reclamationId);
+      if (reclamation) {
+        reclamation.lu = false;
+        reclamation.dateLecture = undefined;
+      }
     } else {
-      this.selectedMessages.push(messageId);
+      this.boiteReceptionService.marquerCommeNonLu(reclamationId).subscribe({
+        next: () => {
+          const reclamation = this.reclamations.find(r => r.id === reclamationId);
+          if (reclamation) {
+            reclamation.lu = false;
+          }
+          this.chargerStatistiques();
+        },
+        error: (err) => {
+          console.error('Erreur marquer comme non lu:', err);
+        }
+      });
+    }
+  }
+
+  toggleSelectReclamation(reclamationId: number): void {
+    const index = this.selectedReclamations.indexOf(reclamationId);
+    if (index > -1) {
+      this.selectedReclamations.splice(index, 1);
+    } else {
+      this.selectedReclamations.push(reclamationId);
     }
     this.updateSelectAll();
   }
 
   toggleSelectAll(): void {
     if (this.selectAll) {
-      this.selectedMessages = this.filteredMessages.map(m => m.id);
+      this.selectedReclamations = this.filteredReclamations.map(r => r.id);
     } else {
-      this.selectedMessages = [];
+      this.selectedReclamations = [];
     }
   }
 
   updateSelectAll(): void {
-    this.selectAll = this.selectedMessages.length === this.filteredMessages.length;
+    this.selectAll = this.selectedReclamations.length === this.filteredReclamations.length;
   }
 
-  marquerPlusieursCommeLus(): void {
-    if (this.selectedMessages.length === 0) return;
+  marquerPlusieursCommeLues(): void {
+    if (this.selectedReclamations.length === 0) return;
     
-    this.boiteReceptionService.marquerPlusieursCommeLus(this.selectedMessages).subscribe({
-      next: () => {
-        this.messages.forEach(m => {
-          if (this.selectedMessages.includes(m.id)) {
-            m.lu = true;
-          }
-        });
-        this.selectedMessages = [];
-        this.selectAll = false;
-        this.chargerStatistiques();
-      },
-      error: (err) => {
-        console.error('Erreur marquer plusieurs comme lus:', err);
+    this.selectedReclamations.forEach(id => {
+      const reclamation = this.reclamations.find(r => r.id === id);
+      if (reclamation) {
+        reclamation.lu = true;
+        reclamation.dateLecture = new Date().toISOString();
       }
     });
-  }
-
-  supprimerPlusieursMessages(): void {
-    if (this.selectedMessages.length === 0) return;
     
-    if (confirm(`Êtes-vous sûr de vouloir supprimer ${this.selectedMessages.length} message(s) ?`)) {
-      this.boiteReceptionService.supprimerPlusieursMessages(this.selectedMessages).subscribe({
-        next: () => {
-          this.messages = this.messages.filter(m => !this.selectedMessages.includes(m.id));
-          if (this.selectedMessage && this.selectedMessages.includes(this.selectedMessage.id)) {
-            this.selectedMessage = null;
-          }
-          this.selectedMessages = [];
-          this.selectAll = false;
-          this.chargerStatistiques();
-        },
-        error: (err) => {
-          console.error('Erreur suppression plusieurs messages:', err);
-        }
-      });
-    }
+    this.selectedReclamations = [];
+    this.selectAll = false;
+    this.chargerStatistiques();
   }
 
-  marquerTousCommeLus(): void {
-    this.boiteReceptionService.marquerTousCommeLus().subscribe({
-      next: () => {
-        this.messages.forEach(m => m.lu = true);
-        this.chargerStatistiques();
-      },
-      error: (err) => {
-        console.error('Erreur marquer tous comme lus:', err);
-      }
+  marquerTousCommeLues(): void {
+    this.reclamations.forEach(r => {
+      r.lu = true;
+      r.dateLecture = new Date().toISOString();
     });
+    this.chargerStatistiques();
   }
 
-  viderBoiteReception(): void {
-    if (confirm('Êtes-vous sûr de vouloir vider complètement la boîte de réception ? Cette action est irréversible.')) {
-      this.boiteReceptionService.viderBoiteReception().subscribe({
-        next: () => {
-          this.messages = [];
-          this.selectedMessage = null;
-          this.selectedMessages = [];
-          this.selectAll = false;
-          this.chargerStatistiques();
-        },
-        error: (err) => {
-          console.error('Erreur vider boîte réception:', err);
-        }
-      });
-    }
-  }
-
-  rechercherMessages(): void {
+  rechercherReclamations(): void {
     if (!this.searchTerm.trim()) {
-      this.chargerMessages();
+      if (this.isDestinataire) {
+        this.chargerReclamationsDestinataire();
+      } else {
+        this.chargerMessages();
+      }
       return;
     }
     
     this.loading = true;
-    this.boiteReceptionService.rechercherMessages(this.searchTerm).subscribe({
-      next: (data) => {
-        this.messages = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.error = 'Erreur lors de la recherche';
-        this.loading = false;
-        console.error('Erreur recherche:', err);
-      }
-    });
+    
+    if (this.isDestinataire) {
+      this.boiteReceptionService.rechercherReclamations(this.searchTerm).subscribe({
+        next: (data) => {
+          this.reclamations = data;
+          this.loading = false;
+        },
+        error: (err) => {
+          this.error = 'Erreur lors de la recherche';
+          this.loading = false;
+          console.error('Erreur recherche réclamations:', err);
+        }
+      });
+    } else {
+      this.boiteReceptionService.rechercherMessages(this.searchTerm).subscribe({
+        next: (data) => {
+          this.reclamations = data.map(msg => ({
+            id: msg.id,
+            titre: msg.titre || msg.sujet,
+            description: msg.contenu,
+            dateCreation: msg.dateEnvoi,
+            statut: msg.type,
+            priorite: msg.priorite,
+            expediteur: msg.expediteur,
+            categorie: 'Message',
+            lu: msg.lu,
+            dateLecture: msg.dateLecture,
+            fichierJoint: msg.pieceJointe
+          }));
+          this.loading = false;
+        },
+        error: (err) => {
+          this.error = 'Erreur lors de la recherche';
+          this.loading = false;
+          console.error('Erreur recherche messages:', err);
+        }
+      });
+    }
   }
 
-  get filteredMessages(): MessageReception[] {
-    let filtered = this.messages;
+  get filteredReclamations(): ReclamationDestinataire[] {
+    let filtered = this.reclamations;
 
-    // Filtre par type
-    if (this.typeFilter) {
-      filtered = filtered.filter(m => m.type === this.typeFilter);
+    // Filtre par statut
+    if (this.statutFilter) {
+      filtered = filtered.filter(r => r.statut === this.statutFilter);
     }
 
     // Filtre par priorité
     if (this.prioriteFilter) {
-      filtered = filtered.filter(m => m.priorite === this.prioriteFilter);
+      filtered = filtered.filter(r => r.priorite === this.prioriteFilter);
     }
 
     // Filtre par statut lu/non lu
     if (this.luFilter === 'lu') {
-      filtered = filtered.filter(m => m.lu);
+      filtered = filtered.filter(r => r.lu);
     } else if (this.luFilter === 'non-lu') {
-      filtered = filtered.filter(m => !m.lu);
+      filtered = filtered.filter(r => !r.lu);
     }
 
     return filtered;
@@ -273,20 +309,76 @@ export class BoiteReceptionComponent implements OnInit {
     }
   }
 
-  getTypeIcon(type: string): string {
-    switch (type) {
-      case 'REPONSE': return '💬';
-      case 'NOTIFICATION': return '🔔';
-      case 'SYSTEME': return '⚙️';
-      default: return '📧';
+  getStatutClass(statut: string): string {
+    switch (statut.toLowerCase()) {
+      case 'en cours': return 'statut-encours';
+      case 'resolu': return 'statut-resolu';
+      case 'en attente': return 'statut-attente';
+      case 'annule': return 'statut-annule';
+      case 'reponse': return 'statut-reponse';
+      case 'notification': return 'statut-notification';
+      case 'systeme': return 'statut-systeme';
+      default: return 'statut-defaut';
+    }
+  }
+
+  getStatutIcon(statut: string): string {
+    switch (statut.toLowerCase()) {
+      case 'en cours': return '🔄';
+      case 'resolu': return '✅';
+      case 'en attente': return '⏳';
+      case 'annule': return '❌';
+      case 'reponse': return '💬';
+      case 'notification': return '🔔';
+      case 'systeme': return '⚙️';
+      default: return '📋';
     }
   }
 
   clearFilters(): void {
     this.searchTerm = '';
-    this.typeFilter = '';
+    this.statutFilter = '';
     this.prioriteFilter = '';
     this.luFilter = '';
-    this.chargerMessages();
+    
+    if (this.isDestinataire) {
+      this.chargerReclamationsDestinataire();
+    } else {
+      this.chargerMessages();
+    }
+  }
+
+  telechargerFichier(reclamation: ReclamationDestinataire): void {
+    if (!reclamation.fichierJoint) return;
+    
+    if (this.isDestinataire) {
+      this.boiteReceptionService.telechargerFichierReclamation(reclamation.id).subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = reclamation.fichierJoint || 'fichier';
+          a.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: (err) => {
+          console.error('Erreur téléchargement fichier:', err);
+        }
+      });
+    } else {
+      this.boiteReceptionService.telechargerPieceJointe(reclamation.id).subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = reclamation.fichierJoint || 'piece-jointe';
+          a.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: (err) => {
+          console.error('Erreur téléchargement pièce jointe:', err);
+        }
+      });
+    }
   }
 }

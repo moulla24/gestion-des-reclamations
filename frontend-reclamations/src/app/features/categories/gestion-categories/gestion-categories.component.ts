@@ -14,6 +14,7 @@ import { Categorie } from '../../../models/categorie.model';
 export class GestionCategoriesComponent implements OnInit {
   categories: Categorie[] = [];
   newCategorieLibelle = '';
+  newCategorieDescription = '';
   editingCategorie: Categorie | null = null;
   error = '';
   success = '';
@@ -46,10 +47,17 @@ export class GestionCategoriesComponent implements OnInit {
     }
 
     this.loading = true;
-    this.reclamationService.ajouterCategorie({ libelle: this.newCategorieLibelle }).subscribe({
+    const newCategorie = {
+      libelle: this.newCategorieLibelle.trim(),
+      description: this.newCategorieDescription.trim() || undefined,
+      actif: true
+    };
+
+    this.reclamationService.ajouterCategorie(newCategorie).subscribe({
       next: () => {
         this.success = 'Catégorie ajoutée avec succès';
         this.newCategorieLibelle = '';
+        this.newCategorieDescription = '';
         this.loadCategories();
         this.clearMessages();
       },
@@ -72,7 +80,13 @@ export class GestionCategoriesComponent implements OnInit {
     }
 
     this.loading = true;
-    this.reclamationService.modifierCategorie(this.editingCategorie.id!, this.editingCategorie).subscribe({
+    const updatedCategorie = {
+      ...this.editingCategorie,
+      libelle: this.editingCategorie.libelle.trim(),
+      description: this.editingCategorie.description?.trim() || undefined
+    };
+
+    this.reclamationService.modifierCategorie(this.editingCategorie.id!, updatedCategorie).subscribe({
       next: () => {
         this.success = 'Catégorie mise à jour avec succès';
         this.editingCategorie = null;

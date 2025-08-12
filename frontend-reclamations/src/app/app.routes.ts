@@ -11,6 +11,8 @@ import { DetailReclamationComponent } from './features/reclamation/detail-reclam
 import { EditReclamationComponent } from './features/reclamation/edit-reclamation/edit-reclamation';
 import { GestionReclamationsComponent } from './features/suivi/gestion-reclamations/gestion-reclamations.component';
 import { GestionCategoriesComponent } from './features/categories/gestion-categories/gestion-categories.component';
+import { GestionDestinatairesComponent } from './features/admin/gestion-destinataires/gestion-destinataires.component';
+import { GestionSuiviReclamationsComponent } from './features/suivi/gestion-suivi-reclamations/gestion-suivi-reclamations.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -29,6 +31,8 @@ export const routes: Routes = [
       { path: 'profil', component: ProfilComponent },
       { path: 'gestion-reclamations', component: GestionReclamationsComponent },
       { path: 'gestion-categories', component: GestionCategoriesComponent },
+      { path: 'gestion-destinataires', component: GestionDestinatairesComponent },
+      { path: 'gestion-suivi-reclamations', component: GestionSuiviReclamationsComponent },
       { path: 'reclamations/detail/:id', component: DetailReclamationComponent },
       { path: 'reclamations/edit/:id', component: EditReclamationComponent },
       {

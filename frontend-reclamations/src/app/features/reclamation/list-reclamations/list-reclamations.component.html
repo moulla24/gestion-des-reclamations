@@ -24,6 +24,7 @@
           <th>Titre</th>
           <th>Statut</th>
           <th>Date</th>
+          <th>Destinataire</th>
           <th>Fichiers joints</th>
           <th>Actions</th>
         </tr>
@@ -34,6 +35,32 @@
             <td>{{ rec.titre }}</td>
             <td [ngClass]="rec.statut.toLowerCase()">{{ rec.statut }}</td>
             <td>{{ rec.dateCreation | date:'short' }}</td>
+            <td>
+              @if (rec.destinataire) {
+                <div class="destinataire-info">
+                  <span class="destinataire-icon">👤</span>
+                  <div class="destinataire-details">
+                    @if (rec.destinataire.prenom && rec.destinataire.nom && rec.destinataire.prenom !== rec.destinataire.nom) {
+                      <span class="destinataire-nom">{{ rec.destinataire.prenom }} {{ rec.destinataire.nom }}</span>
+                    } @else {
+                      <span class="destinataire-nom">{{ rec.destinataire.nom || rec.destinataire.prenom }}</span>
+                    }
+                    @if (rec.destinataire.service && rec.destinataire.service !== rec.destinataire.nom) {
+                      <span class="destinataire-service">{{ rec.destinataire.service }}</span>
+                    }
+                  </div>
+                </div>
+              } @else if (rec.nomDestinataire) {
+                <span class="destinataire-info">
+                  <span class="destinataire-icon">👤</span>
+                  {{ rec.nomDestinataire }}
+                </span>
+              } @else {
+                <span class="no-destinataire">
+                  Aucun destinataire
+                </span>
+              }
+            </td>
             <td>
               @if (rec.fichiersJoints && rec.fichiersJoints.length > 0) {
                 <div class="fichiers-joints">

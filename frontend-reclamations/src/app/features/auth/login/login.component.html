@@ -43,10 +43,18 @@
         {{ error }}
       </div>
 
-      <button type="submit" class="login-btn" [disabled]="loginForm.invalid || loading">
-        <span *ngIf="loading" class="loading-spinner">⏳</span>
+      <button type="submit" class="login-submit-btn" [disabled]="loading">
         {{ loading ? 'Connexion...' : 'Se connecter' }}
       </button>
+
+      <!-- Bouton de test pour diagnostiquer -->
+      <button type="button" class="test-connection-btn" (click)="testConnection()" [disabled]="testingConnection">
+        {{ testingConnection ? 'Test en cours...' : 'Tester la connexion au serveur' }}
+      </button>
+
+      <div *ngIf="connectionStatus" class="connection-status">
+        {{ connectionStatus }}
+      </div>
     </form>
 
     <div class="register-link">

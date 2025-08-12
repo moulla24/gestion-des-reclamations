@@ -7,4 +7,5 @@ export interface Utilisateur {
   telephone?: string;
   role: 'UTILISATEUR'; // Toujours UTILISATEUR
   type_utilisateur: 'DESTINATAIRE' | 'UTILISATEUR'; // Détermine la table
+  actif?: boolean; // Statut actif/inactif
 }

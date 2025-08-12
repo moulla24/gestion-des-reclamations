@@ -1,8 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UtilisateurService, ProfilUtilisateur, StatistiquesUtilisateur } from '../../../core/services/utilisateur.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UtilisateurService } from '../../../core/services/utilisateur.service';
+import { ProfilUtilisateur, StatistiquesUtilisateur } from '../../../core/services/utilisateur.service';
 
 @Component({
   selector: 'app-profil',
@@ -12,66 +13,128 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrls: ['./profil.component.css']
 })
 export class ProfilComponent implements OnInit {
-  private utilisateurService = inject(UtilisateurService);
-  private authService = inject(AuthService);
-
   profil: ProfilUtilisateur | null = null;
   statistiques: StatistiquesUtilisateur | null = null;
-  historiqueConnexions: any[] = [];
-  notifications: any[] = [];
-  
-  // Mode d'édition
-  modeEdition = false;
-  modeChangementMotDePasse = false;
-  
-  // Formulaires
-  profilForm = {
+  loading = false;
+  error = '';
+  success = '';
+
+  // Mode édition
+  isEditing = false;
+  editForm = {
     nom: '',
     prenom: '',
-    email: '',
     telephone: ''
   };
-  
-  motDePasseForm = {
+
+  // Changement de mot de passe
+  changePassword = {
     ancienMotDePasse: '',
     nouveauMotDePasse: '',
     confirmerMotDePasse: ''
   };
-  
-  // États
-  loading = false;
-  error = '';
-  success = '';
-  
-  // Onglets
-  ongletActif = 'profil';
+
+  constructor(
+    private authService: AuthService,
+    private utilisateurService: UtilisateurService
+  ) {}
 
   ngOnInit(): void {
-    this.chargerProfil();
+    // Charger d'abord les informations de base depuis le token JWT
+    this.chargerProfilFromToken();
+    // Puis charger le profil complet depuis l'API
+    this.chargerProfilFromAPI();
     this.chargerStatistiques();
-    this.chargerHistoriqueConnexions();
-    this.chargerNotifications();
+  }
+
+  private chargerProfilFromToken(): void {
+    // Récupérer les informations de base depuis le token JWT
+    const userInfo = this.authService.getCurrentUserInfo();
+    
+    if (userInfo) {
+      console.log('✅ Informations utilisateur récupérées depuis le token:', userInfo);
+      
+      // Créer un profil de base avec les informations du token
+      this.profil = {
+        id: 0, // Sera mis à jour par l'API
+        nom: userInfo.nom || '',
+        prenom: userInfo.prenom || '',
+        email: userInfo.email || '',
+        telephone: '',
+        role: userInfo.role || '',
+        type_utilisateur: userInfo.type || '',
+        actif: true,
+        dateCreation: new Date().toISOString(),
+        derniereConnexion: new Date().toISOString(),
+        nombreReclamations: 0,
+        reclamationsResolues: 0,
+        reclamationsEnCours: 0
+      };
+      
+      // Mettre à jour le formulaire d'édition
+      this.editForm = {
+        nom: this.profil.nom,
+        prenom: this.profil.prenom,
+        telephone: this.profil.telephone
+      };
+      
+      console.log('👤 Profil de base créé depuis le token:', this.profil);
+    } else {
+      console.warn('⚠️ Aucune information utilisateur trouvée dans le token');
+      this.error = 'Impossible de récupérer les informations utilisateur';
+    }
+  }
+
+  private chargerProfilFromAPI(): void {
+    this.loading = true;
+    this.error = '';
+    
+    this.authService.getProfil().subscribe({
+      next: (data: any) => {
+        console.log('✅ Profil utilisateur chargé depuis l\'API:', data);
+        
+        // Mettre à jour le profil avec les données de l'API
+        if (this.profil) {
+          this.profil = {
+            ...this.profil,
+            ...data,
+            // Garder les informations du token si l'API ne les fournit pas
+            nom: data.nom || this.profil.nom,
+            prenom: data.prenom || this.profil.prenom,
+            email: data.email || this.profil.email,
+            role: data.role || this.profil.role,
+            type_utilisateur: data.type_utilisateur || this.profil.type_utilisateur
+          };
+        } else {
+          this.profil = data;
+        }
+        
+        // Mettre à jour le formulaire d'édition
+        this.editForm = {
+          nom: this.profil?.nom || '',
+          prenom: this.profil?.prenom || '',
+          telephone: this.profil?.telephone || ''
+        };
+        
+        this.loading = false;
+        console.log('👤 Profil final mis à jour:', this.profil);
+      },
+      error: (err: any) => {
+        console.error('❌ Erreur lors du chargement du profil API:', err);
+        this.error = 'Erreur lors du chargement du profil depuis l\'API';
+        this.loading = false;
+        
+        // Si l'API échoue, on garde les informations du token
+        console.log('💡 Utilisation des informations du token JWT');
+      }
+    });
   }
 
   chargerProfil(): void {
-    this.loading = true;
-    this.utilisateurService.getProfil().subscribe({
-      next: (data: ProfilUtilisateur) => {
-        this.profil = data;
-        this.profilForm = {
-          nom: data.nom,
-          prenom: data.prenom,
-          email: data.email,
-          telephone: data.telephone
-        };
-        this.loading = false;
-      },
-      error: (err: any) => {
-        this.error = 'Erreur lors du chargement du profil';
-        this.loading = false;
-        console.error('Erreur profil:', err);
-      }
-    });
+    // Cette méthode est maintenant remplacée par chargerProfilFromToken et chargerProfilFromAPI
+    console.log('🔄 Méthode chargerProfil() appelée - redirection vers les nouvelles méthodes');
+    this.chargerProfilFromToken();
+    this.chargerProfilFromAPI();
   }
 
   chargerStatistiques(): void {
@@ -80,174 +143,119 @@ export class ProfilComponent implements OnInit {
         this.statistiques = data;
       },
       error: (err: any) => {
-        console.error('Erreur statistiques:', err);
+        console.error('Erreur lors du chargement des statistiques:', err);
       }
     });
   }
 
-  chargerHistoriqueConnexions(): void {
-    this.utilisateurService.getHistoriqueConnexions().subscribe({
-      next: (data: any[]) => {
-        this.historiqueConnexions = data;
-      },
-      error: (err: any) => {
-        console.error('Erreur historique connexions:', err);
-      }
-    });
-  }
-
-  chargerNotifications(): void {
-    this.utilisateurService.getNotifications().subscribe({
-      next: (data: any[]) => {
-        this.notifications = data;
-      },
-      error: (err: any) => {
-        console.error('Erreur notifications:', err);
-      }
-    });
-  }
-
-  activerModeEdition(): void {
-    this.modeEdition = true;
+  activerEdition(): void {
+    this.isEditing = true;
     this.error = '';
     this.success = '';
   }
 
   annulerEdition(): void {
-    this.modeEdition = false;
-    if (this.profil) {
-      this.profilForm = {
-        nom: this.profil.nom,
-        prenom: this.profil.prenom,
-        email: this.profil.email,
-        telephone: this.profil.telephone
-      };
-    }
+    this.isEditing = false;
+    this.editForm = {
+      nom: this.profil?.nom || '',
+      prenom: this.profil?.prenom || '',
+      telephone: this.profil?.telephone || ''
+    };
+    this.error = '';
   }
 
   sauvegarderProfil(): void {
     if (!this.profil) return;
-    
+
     this.loading = true;
-    this.utilisateurService.updateProfil(this.profilForm).subscribe({
+    this.utilisateurService.mettreAJourProfil({
+      nom: this.editForm.nom,
+      prenom: this.editForm.prenom,
+      telephone: this.editForm.telephone
+    }).subscribe({
       next: (data: ProfilUtilisateur) => {
         this.profil = data;
-        this.modeEdition = false;
+        this.isEditing = false;
         this.success = 'Profil mis à jour avec succès';
         this.loading = false;
         setTimeout(() => this.success = '', 3000);
       },
       error: (err: any) => {
-        this.error = err?.error?.message || 'Erreur lors de la mise à jour du profil';
+        console.error('Erreur lors de la mise à jour du profil:', err);
+        this.error = err.error?.message || 'Erreur lors de la mise à jour du profil';
         this.loading = false;
       }
     });
   }
 
-  activerChangementMotDePasse(): void {
-    this.modeChangementMotDePasse = true;
-    this.motDePasseForm = {
-      ancienMotDePasse: '',
-      nouveauMotDePasse: '',
-      confirmerMotDePasse: ''
-    };
-    this.error = '';
-    this.success = '';
-  }
-
-  annulerChangementMotDePasse(): void {
-    this.modeChangementMotDePasse = false;
-  }
-
   changerMotDePasse(): void {
-    if (this.motDePasseForm.nouveauMotDePasse !== this.motDePasseForm.confirmerMotDePasse) {
+    if (this.changePassword.nouveauMotDePasse !== this.changePassword.confirmerMotDePasse) {
       this.error = 'Les mots de passe ne correspondent pas';
       return;
     }
 
-    if (this.motDePasseForm.nouveauMotDePasse.length < 6) {
+    if (this.changePassword.nouveauMotDePasse.length < 6) {
       this.error = 'Le nouveau mot de passe doit contenir au moins 6 caractères';
       return;
     }
 
     this.loading = true;
     this.utilisateurService.changerMotDePasse(
-      this.motDePasseForm.ancienMotDePasse,
-      this.motDePasseForm.nouveauMotDePasse
+      this.changePassword.ancienMotDePasse,
+      this.changePassword.nouveauMotDePasse
     ).subscribe({
       next: () => {
-        this.modeChangementMotDePasse = false;
         this.success = 'Mot de passe changé avec succès';
+        this.changePassword = {
+          ancienMotDePasse: '',
+          nouveauMotDePasse: '',
+          confirmerMotDePasse: ''
+        };
         this.loading = false;
         setTimeout(() => this.success = '', 3000);
       },
       error: (err: any) => {
-        this.error = err?.error?.message || 'Erreur lors du changement de mot de passe';
+        console.error('Erreur lors du changement de mot de passe:', err);
+        this.error = err.error?.message || 'Erreur lors du changement de mot de passe';
         this.loading = false;
-      }
-    });
-  }
-
-  marquerNotificationLue(notificationId: number): void {
-    this.utilisateurService.marquerNotificationLue(notificationId).subscribe({
-      next: () => {
-        this.chargerNotifications();
-      },
-      error: (err: any) => {
-        console.error('Erreur marquer notification lue:', err);
-      }
-    });
-  }
-
-  supprimerNotification(notificationId: number): void {
-    this.utilisateurService.supprimerNotification(notificationId).subscribe({
-      next: () => {
-        this.chargerNotifications();
-      },
-      error: (err: any) => {
-        console.error('Erreur supprimer notification:', err);
       }
     });
   }
 
   desactiverCompte(): void {
     if (confirm('Êtes-vous sûr de vouloir désactiver votre compte ? Cette action est irréversible.')) {
+      this.loading = true;
       this.utilisateurService.desactiverCompte().subscribe({
         next: () => {
           this.authService.logout();
         },
         error: (err: any) => {
-          this.error = err?.error?.message || 'Erreur lors de la désactivation du compte';
+          console.error('Erreur lors de la désactivation du compte:', err);
+          this.error = 'Erreur lors de la désactivation du compte';
+          this.loading = false;
         }
       });
     }
   }
 
-  changerOnglet(onglet: string): void {
-    this.ongletActif = onglet;
-  }
-
-  getRoleLabel(role: string): string {
-    switch (role) {
+  getRoleDisplay(): string {
+    if (!this.profil) return '';
+    
+    switch (this.profil.role) {
       case 'ADMIN': return 'Administrateur';
-      case 'UTILISATEUR': return 'Utilisateur';
-      default: return role;
-    }
-  }
-
-  getTypeUtilisateurLabel(type: string): string {
-    switch (type) {
       case 'DESTINATAIRE': return 'Destinataire';
-      case 'UTILISATEUR': return 'Utilisateur standard';
-      default: return type;
+      case 'UTILISATEUR': return 'Utilisateur';
+      default: return this.profil.role;
     }
   }
 
-  getStatutCompteLabel(actif: boolean): string {
-    return actif ? 'Actif' : 'Inactif';
+  getStatusDisplay(): string {
+    if (!this.profil) return '';
+    return this.profil.actif ? 'Actif' : 'Inactif';
   }
 
-  getStatutCompteClass(actif: boolean): string {
-    return actif ? 'statut-actif' : 'statut-inactif';
+  getStatusClass(): string {
+    if (!this.profil) return '';
+    return this.profil.actif ? 'status-active' : 'status-inactive';
   }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReclamationService, ReclamationResponseDTO } from '../../../core/services/reclamation.service';
+import { ReclamationService, ReclamationResponseExtendedDTO } from '../../../core/services/reclamation.service';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 
@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./list-reclamations.component.css']
 })
 export class ListReclamationsComponent implements OnInit {
-  reclamations: ReclamationResponseDTO[] = [];
+  reclamations: ReclamationResponseExtendedDTO[] = [];
   error = '';
   success = '';
   loading = false;
@@ -31,14 +31,33 @@ export class ListReclamationsComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.success = '';
-    this.reclamationService.getMesReclamations().subscribe({
-      next: (data: ReclamationResponseDTO[]) => {
+    
+    // Essayer d'abord la méthode avec les détails complets
+    this.reclamationService.getMesReclamationsAvecDestinataires().subscribe({
+      next: (data: ReclamationResponseExtendedDTO[]) => {
         this.reclamations = data;
         this.loading = false;
+        console.log('✅ Réclamations chargées avec détails destinataires:', this.reclamations);
+      },
+      error: (err: any) => {
+        console.log('⚠️ Méthode étendue échouée, utilisation du fallback');
+        // En cas d'échec, utiliser la méthode fallback
+        this.chargerReclamationsFallback();
+      }
+    });
+  }
+
+  private chargerReclamationsFallback() {
+    this.reclamationService.getMesReclamationsAvecDestinatairesFallback().subscribe({
+      next: (data: ReclamationResponseExtendedDTO[]) => {
+        this.reclamations = data;
+        this.loading = false;
+        console.log('✅ Réclamations chargées avec fallback:', this.reclamations);
       },
       error: (err: any) => {
         this.error = err?.error?.message || 'Erreur lors du chargement des réclamations.';
         this.loading = false;
+        console.error('❌ Erreur lors du chargement des réclamations:', err);
       }
     });
   }

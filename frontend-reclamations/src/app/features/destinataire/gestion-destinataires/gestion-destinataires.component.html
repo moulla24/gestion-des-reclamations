@@ -1,0 +1,302 @@
+<div class="gestion-destinataires-container">
+  <div class="header">
+    <h2>Gestion des Destinataires</h2>
+    <p>Gérez les destinataires et leurs affectations aux catégories</p>
+  </div>
+
+  @if (error) {
+    <div class="error-alert">
+      <span class="error-icon">⚠️</span>
+      {{ error }}
+    </div>
+  }
+
+  @if (success) {
+    <div class="success-alert">
+      <span class="success-icon">✅</span>
+      {{ success }}
+    </div>
+  }
+
+  <!-- Filtres -->
+  <div class="filtres-section">
+    <h3>Filtres</h3>
+    <div class="filtres-grid">
+      <div class="filtre-groupe">
+        <label for="filtreService">Service</label>
+        <input
+          type="text"
+          id="filtreService"
+          [(ngModel)]="filtreService"
+          placeholder="Filtrer par service"
+        />
+      </div>
+
+      <div class="filtre-groupe">
+        <label for="filtreCategorie">Catégorie</label>
+        <select id="filtreCategorie" [(ngModel)]="filtreCategorie">
+          <option value="">Toutes les catégories</option>
+          @for (categorie of categories; track categorie.id) {
+            <option [value]="categorie.id">{{ categorie.nom }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filtre-groupe">
+        <label for="filtreStatut">Statut</label>
+        <select id="filtreStatut" [(ngModel)]="filtreStatut">
+          <option value="">Tous les statuts</option>
+          <option value="actif">Actif</option>
+          <option value="inactif">Inactif</option>
+        </select>
+      </div>
+
+      <div class="filtre-actions">
+        <button class="btn-filtrer" (click)="filtrerDestinataires()">
+          🔍 Filtrer
+        </button>
+        <button class="btn-reset" (click)="reinitialiserFiltres()">
+          🔄 Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des destinataires -->
+  <div class="tableau-section">
+    <div class="tableau-header">
+      <h3>Liste des Destinataires</h3>
+      <div class="tableau-info">
+        {{ getElementsAffichage() }}
+      </div>
+    </div>
+
+    @if (loading) {
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Chargement des destinataires...</p>
+      </div>
+    } @else if (destinataires.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <p>Aucun destinataire trouvé</p>
+        <p class="empty-subtitle">Essayez de modifier vos filtres ou ajoutez un nouveau destinataire</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="destinataires-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Service</th>
+              <th>Catégorie</th>
+              <th>Statut</th>
+              <th>Réclamations</th>
+              <th>Date création</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (destinataire of destinataires; track destinataire.id) {
+              <tr>
+                <td>
+                  <div class="destinataire-info">
+                    <div class="nom-complet">{{ destinataire.prenom }} {{ destinataire.nom }}</div>
+                    <div class="email">{{ destinataire.email }}</div>
+                    <div class="telephone">{{ destinataire.telephone }}</div>
+                  </div>
+                </td>
+                <td>
+                  <span class="service-badge">{{ destinataire.service }}</span>
+                </td>
+                <td>
+                  <span class="categorie-badge">{{ getCategorieNom(destinataire.categorieId) }}</span>
+                </td>
+                <td>
+                  <span class="statut-badge {{ getStatutClass(destinataire.actif) }}">
+                    {{ getStatutDisplay(destinataire.actif) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="stats-reclamations">
+                    <div class="stat-item">
+                      <span class="stat-label">Total:</span>
+                      <span class="stat-value">{{ destinataire.nombreReclamations }}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Résolues:</span>
+                      <span class="stat-value resolved">{{ destinataire.reclamationsResolues }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="date">{{ destinataire.dateCreation | date:'dd/MM/yyyy' }}</span>
+                </td>
+                <td>
+                  <div class="actions">
+                    <button 
+                      class="btn-action edit" 
+                      (click)="editerDestinataire(destinataire)"
+                      title="Modifier"
+                    >
+                      ✏️
+                    </button>
+                    @if (destinataire.actif) {
+                      <button 
+                        class="btn-action deactivate" 
+                        (click)="desactiverDestinataire(destinataire)"
+                        title="Désactiver"
+                      >
+                        🚫
+                      </button>
+                    } @else {
+                      <button 
+                        class="btn-action activate" 
+                        (click)="activerDestinataire(destinataire)"
+                        title="Activer"
+                      >
+                        ✅
+                      </button>
+                    }
+                    <button 
+                      class="btn-action delete" 
+                      (click)="supprimerDestinataire(destinataire)"
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <button 
+            class="btn-page" 
+            [disabled]="pageActuelle === 1"
+            (click)="changerPage(pageActuelle - 1)"
+          >
+            ← Précédent
+          </button>
+          
+          <div class="pages">
+            @for (page of pages; track page) {
+              <button 
+                class="btn-page {{ page === pageActuelle ? 'active' : '' }}"
+                (click)="changerPage(page)"
+              >
+                {{ page }}
+              </button>
+            }
+          </div>
+          
+          <button 
+            class="btn-page" 
+            [disabled]="pageActuelle === totalPages"
+            (click)="changerPage(pageActuelle + 1)"
+          >
+            Suivant →
+          </button>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Modal d'édition -->
+  @if (modeEdition && destinataireEnEdition) {
+    <div class="modal-overlay" (click)="annulerEdition()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Modifier le Destinataire</h3>
+          <button class="btn-close" (click)="annulerEdition()">×</button>
+        </div>
+        
+        <form class="edit-form" (ngSubmit)="sauvegarderDestinataire()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editNom">Nom</label>
+              <input
+                type="text"
+                id="editNom"
+                [(ngModel)]="destinataireEnEdition.nom"
+                name="nom"
+                required
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="editPrenom">Prénom</label>
+              <input
+                type="text"
+                id="editPrenom"
+                [(ngModel)]="destinataireEnEdition.prenom"
+                name="prenom"
+                required
+              />
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editEmail">Email</label>
+              <input
+                type="email"
+                id="editEmail"
+                [(ngModel)]="destinataireEnEdition.email"
+                name="email"
+                required
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="editTelephone">Téléphone</label>
+              <input
+                type="tel"
+                id="editTelephone"
+                [(ngModel)]="destinataireEnEdition.telephone"
+                name="telephone"
+                required
+              />
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editService">Service</label>
+              <input
+                type="text"
+                id="editService"
+                [(ngModel)]="destinataireEnEdition.service"
+                name="service"
+                required
+              />
+            </div>
+            
+            <div class="form-group">
+              <label for="editCategorie">Catégorie</label>
+              <select id="editCategorie" [(ngModel)]="destinataireEnEdition.categorieId" name="categorie" required>
+                @for (categorie of categories; track categorie.id) {
+                  <option [value]="categorie.id">{{ categorie.nom }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn-save" [disabled]="loading">
+              {{ loading ? 'Sauvegarde...' : 'Sauvegarder' }}
+            </button>
+            <button type="button" class="btn-cancel" (click)="annulerEdition()">
+              Annuler
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

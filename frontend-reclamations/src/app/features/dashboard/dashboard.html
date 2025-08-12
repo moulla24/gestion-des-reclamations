@@ -83,8 +83,14 @@
       
       <div class="header-actions">
         <div class="user-info">
-          <span class="user-role">{{ userRole }}</span>
-          <span class="user-name">{{ userName }}</span>
+          <div class="user-details">
+            <span class="user-name">{{ userName }}</span>
+            <span class="user-email">{{ userEmail }}</span>
+            <span class="user-role">{{ userRole }}</span>
+          </div>
+          <div class="user-avatar">
+            👤
+          </div>
         </div>
         <div class="header-notifications">
           @if (unreadNotifications > 0) {
